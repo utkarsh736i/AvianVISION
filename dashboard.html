@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Synaptic Monitor — Dashboard</title>
+
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Chart.js (loaded before dashboard.js which uses it) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="dashboard.css">
+</head>
+<body>
+
+  <!-- ════════════════════════════════════════ HEADER ══ -->
+  <header class="hdr">
+    <!-- Brand — clicking logo returns to landing page -->
+    <div class="brand">
+      <a href="index.html" class="brand-link" title="Back to home">
+        <div class="brand-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="3" width="20" height="14" rx="2"/>
+            <path d="M8 21h8M12 17v4"/>
+            <path d="M7 8h2v4H7zM11 10h2v2h-2zM15 7h2v5h-2z"/>
+          </svg>
+        </div>
+      </a>
+      <div>
+        <h1>SYNAPTIC MONITOR</h1>
+        <p>Industrial Intelligent Monitoring &amp; Predictive Maintenance · v1.0</p>
+      </div>
+    </div>
+
+    <!-- Right side: connection status, live badge, clock -->
+    <div class="hdr-right">
+      <div class="conn-row">
+        <div class="cdot" id="cdot"></div>
+        <span id="ctext">Connected</span>
+      </div>
+      <div class="live-pill">
+        <div class="pdot"></div>
+        LIVE
+      </div>
+      <div class="hdr-clock">
+        <div class="hdr-time" id="hdrTime">--:--:--</div>
+        <div class="hdr-date" id="hdrDate">---</div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ════════════════════════════════════════ BOTTOM NAV (mobile) ══ -->
+  <nav class="bnav">
+    <div class="bnav-inner">
+      <button class="bnav-btn active" onclick="switchTab('overview', this)">
+        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        Overview
+      </button>
+      <button class="bnav-btn" onclick="switchTab('charts', this)">
+        <svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        Charts
+      </button>
+      <button class="bnav-btn" onclick="switchTab('machines', this)">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
+        Machines
+      </button>
+      <button class="bnav-btn" onclick="switchTab('alerts', this)" id="bnav-alerts">
+        <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        Alerts
+      </button>
+    </div>
+  </nav>
+
+  <!-- ════════════════════════════════════════ MAIN BODY ══ -->
+  <div class="body">
+
+    <!-- METRIC CARDS — always visible on all breakpoints -->
+    <div class="metrics">
+
+      <div class="mc teal" id="mc-temp">
+        <div class="mc-top">
+          <div class="mc-label">Temperature</div>
+          <div class="badge ok" id="bd-temp">OK</div>
+        </div>
+        <div class="mc-val">
+          <span id="vl-temp">--</span>
+          <span class="unit">°C</span>
+        </div>
+        <div class="mc-range">
+          <span>MIN<span class="v" id="mn-temp">--</span></span>
+          <span>MAX<span class="v" id="mx-temp">--</span></span>
+        </div>
+      </div>
+
+      <div class="mc amber" id="mc-vib">
+        <div class="mc-top">
+          <div class="mc-label">Vibration</div>
+          <div class="badge ok" id="bd-vib">OK</div>
+        </div>
+        <div class="mc-val">
+          <span id="vl-vib">--</span>
+          <span class="unit">mm/s</span>
+        </div>
+        <div class="mc-range">
+          <span>MIN<span class="v" id="mn-vib">--</span></span>
+          <span>MAX<span class="v" id="mx-vib">--</span></span>
+        </div>
+      </div>
+
+      <div class="mc blue" id="mc-ldr">
+        <div class="mc-top">
+          <div class="mc-label">Light Intensity</div>
+          <div class="badge ok" id="bd-ldr">OK</div>
+        </div>
+        <div class="mc-val">
+          <span id="vl-ldr">--</span>
+          <span class="unit">lux</span>
+        </div>
+        <div class="mc-range">
+          <span>MIN<span class="v" id="mn-ldr">--</span></span>
+          <span>MAX<span class="v" id="mx-ldr">--</span></span>
+        </div>
+      </div>
+
+      <div class="mc green" id="mc-env">
+        <div class="mc-top">
+          <div class="mc-label">Humidity</div>
+          <div class="badge ok" id="bd-env">OK</div>
+        </div>
+        <div class="mc-val">
+          <span id="vl-env">--</span>
+          <span class="unit">%RH</span>
+        </div>
+        <div class="mc-range">
+          <span>MIN<span class="v" id="mn-env">--</span></span>
+          <span>MAX<span class="v" id="mx-env">--</span></span>
+        </div>
+      </div>
+
+    </div><!-- /metrics -->
+
+    <!-- ── TAB: CHARTS + DESKTOP SIDEBAR ── -->
+    <div class="tab-section active" id="tab-charts">
+      <div class="main">
+
+        <!-- 4 live charts -->
+        <div class="charts">
+
+          <div class="cc">
+            <div class="cc-head">
+              <div class="cc-title">Temperature Trend</div>
+              <div class="cc-meta">
+                <span class="cc-live">LIVE ·</span>
+                <span class="cc-cur teal" id="cv-temp">-- °C</span>
+              </div>
+            </div>
+            <div class="cw"><canvas id="chTemp"></canvas></div>
+          </div>
+
+          <div class="cc">
+            <div class="cc-head">
+              <div class="cc-title">Vibration Level</div>
+              <div class="cc-meta">
+                <span class="cc-live">LIVE ·</span>
+                <span class="cc-cur amber" id="cv-vib">-- mm/s</span>
+              </div>
+            </div>
+            <div class="cw"><canvas id="chVib"></canvas></div>
+          </div>
+
+          <div class="cc">
+            <div class="cc-head">
+              <div class="cc-title">Light Intensity (LDR)</div>
+              <div class="cc-meta">
+                <span class="cc-live">LIVE ·</span>
+                <span class="cc-cur blue" id="cv-ldr">-- lux</span>
+              </div>
+            </div>
+            <div class="cw"><canvas id="chLdr"></canvas></div>
+          </div>
+
+          <div class="cc">
+            <div class="cc-head">
+              <div class="cc-title">Humidity &amp; Ambient Temp</div>
+              <div class="cc-meta">
+                <span class="cc-live">LIVE ·</span>
+                <span class="cc-cur green" id="cv-env">-- %RH</span>
+              </div>
+            </div>
+            <div class="cw"><canvas id="chEnv"></canvas></div>
+          </div>
+
+        </div><!-- /charts -->
+
+        <!-- Sidebar: visible on desktop, hidden on mobile -->
+        <div class="sidebar desktop-sidebar">
+
+          <!-- Machine Health panel -->
+          <div class="panel">
+            <div class="panel-head">
+              <div class="panel-title">Machine Health</div>
+            </div>
+            <div class="mach">
+              <div class="mach-row">
+                <div class="mach-name">Machine A — Motor</div>
+                <div class="mach-pct" id="hp-A-d" style="color:#00c9a7">87%</div>
+              </div>
+              <div class="hbar"><div class="hfill g" id="hb-A-d" style="width:87%"></div></div>
+              <div class="mach-sub" id="hs-A-d">Operating normally</div>
+            </div>
+            <div class="mach">
+              <div class="mach-row">
+                <div class="mach-name">Machine B — Conveyor</div>
+                <div class="mach-pct" id="hp-B-d" style="color:#f59e0b">61%</div>
+              </div>
+              <div class="hbar"><div class="hfill w" id="hb-B-d" style="width:61%"></div></div>
+              <div class="mach-sub" id="hs-B-d">Vibration elevated</div>
+            </div>
+            <div class="mach">
+              <div class="mach-row">
+                <div class="mach-name">Machine C — Compressor</div>
+                <div class="mach-pct" id="hp-C-d" style="color:#00c9a7">93%</div>
+              </div>
+              <div class="hbar"><div class="hfill g" id="hb-C-d" style="width:93%"></div></div>
+              <div class="mach-sub" id="hs-C-d">All params nominal</div>
+            </div>
+            <div class="mach">
+              <div class="mach-row">
+                <div class="mach-name">Machine D — Pump</div>
+                <div class="mach-pct" id="hp-D-d" style="color:#f87171">34%</div>
+              </div>
+              <div class="hbar"><div class="hfill b" id="hb-D-d" style="width:34%"></div></div>
+              <div class="mach-sub" id="hs-D-d">⚠ Maintenance required</div>
+            </div>
+          </div><!-- /panel -->
+
+          <!-- Alerts panel -->
+          <div class="panel" style="flex:1;">
+            <div class="panel-head">
+              <div class="panel-title">Active Alerts</div>
+              <div class="alert-count" id="alCount-d">0</div>
+            </div>
+            <div class="alerts-wrap" id="alList-d">
+              <div class="no-alerts">— No active alerts —</div>
+            </div>
+          </div>
+
+        </div><!-- /desktop-sidebar -->
+
+      </div><!-- /main -->
+    </div><!-- /tab-charts -->
+
+    <!-- ── TAB: MACHINES (mobile only) ── -->
+    <div class="tab-section" id="tab-machines">
+      <div class="sidebar" style="flex-direction:column;">
+        <div class="panel">
+          <div class="panel-head">
+            <div class="panel-title">Machine Health</div>
+          </div>
+          <div class="mach">
+            <div class="mach-row">
+              <div class="mach-name">Machine A — Motor</div>
+              <div class="mach-pct" id="hp-A" style="color:#00c9a7">87%</div>
+            </div>
+            <div class="hbar"><div class="hfill g" id="hb-A" style="width:87%"></div></div>
+            <div class="mach-sub" id="hs-A">Operating normally</div>
+          </div>
+          <div class="mach">
+            <div class="mach-row">
+              <div class="mach-name">Machine B — Conveyor</div>
+              <div class="mach-pct" id="hp-B" style="color:#f59e0b">61%</div>
+            </div>
+            <div class="hbar"><div class="hfill w" id="hb-B" style="width:61%"></div></div>
+            <div class="mach-sub" id="hs-B">Vibration elevated</div>
+          </div>
+          <div class="mach">
+            <div class="mach-row">
+              <div class="mach-name">Machine C — Compressor</div>
+              <div class="mach-pct" id="hp-C" style="color:#00c9a7">93%</div>
+            </div>
+            <div class="hbar"><div class="hfill g" id="hb-C" style="width:93%"></div></div>
+            <div class="mach-sub" id="hs-C">All params nominal</div>
+          </div>
+          <div class="mach">
+            <div class="mach-row">
+              <div class="mach-name">Machine D — Pump</div>
+              <div class="mach-pct" id="hp-D" style="color:#f87171">34%</div>
+            </div>
+            <div class="hbar"><div class="hfill b" id="hb-D" style="width:34%"></div></div>
+            <div class="mach-sub" id="hs-D">⚠ Maintenance required</div>
+          </div>
+        </div>
+      </div>
+    </div><!-- /tab-machines -->
+
+    <!-- ── TAB: ALERTS (mobile only) ── -->
+    <div class="tab-section" id="tab-alerts">
+      <div class="panel">
+        <div class="panel-head">
+          <div class="panel-title">Active Alerts</div>
+          <div class="alert-count" id="alCount">0</div>
+        </div>
+        <div class="alerts-wrap" id="alList">
+          <div class="no-alerts">— No active alerts —</div>
+        </div>
+      </div>
+    </div><!-- /tab-alerts -->
+
+    <!-- FOOTER -->
+    <div class="footer">
+      <div class="fstats">
+        <div>Uptime <span id="fUptime">--</span></div>
+        <div>Data Points <span id="fPts">0</span></div>
+        <div>Poll Rate <span>2 s</span></div>
+        <div>Sensors <span>4 Active</span></div>
+      </div>
+      <div>RP2040 · MicroPython · FastAPI · Ngrok</div>
+    </div>
+
+  </div><!-- /body -->
+
+  <!-- Scripts (after DOM so elements are available) -->
+  <script src="dashboard.js"></script>
+
+</body>
+</html>
