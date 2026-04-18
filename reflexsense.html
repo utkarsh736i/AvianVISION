@@ -1,0 +1,1236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ReflexSense — The Nervous System of Industry</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+
+
+
+
+:root{
+  /* ── NERVOUS SYSTEM PALETTE ── */
+  --void:    #020610;         /* deepest navy void */
+  --deep:    #050d1e;         /* midnight navy base */
+  --bg:      #081229;         /* primary bg navy */
+  --bg2:     #0a1630;         /* secondary bg */
+  --card:    #0c1a38;         /* card surfaces */
+  --border:  #132240;         /* subtle borders */
+  --border2: #1e3560;         /* active borders */
+  --neural:  #00d4e8;         /* electric teal / cyan synapse */
+  --neural2: #00b0c4;         /* deeper teal */
+  --neural3: #00f0ff;         /* bright cyan pulse */
+  --pulse:   #6c9fff;         /* soft navy-blue accent */
+  --pulse2:  #4a7de8;
+  --signal:  #ff6b35;         /* alert orange */
+  --amber:   #f5a623;
+  --red:     #ff4d6a;
+  --green:   #2dd4aa;
+  --nwhite:  #e8f4ff;         /* neural white */
+  --lgrey:   #9bb8d4;         /* light grey UI */
+  --t1:      #edf5ff;         /* primary text - neural white */
+  --t2:      #7aa0c0;         /* secondary text */
+  --t3:      #2e4a6a;         /* muted text */
+  --fd: 'Syne', sans-serif;
+  --fb: 'Space Grotesk', sans-serif;
+  --fm: 'IBM Plex Mono', monospace;
+}
+
+
+body{background:var(--void);color:var(--t1);font-family:var(--fb);overflow-x:hidden;cursor:none;}
+
+/* ── CUSTOM CURSOR ── */
+.cursor{position:fixed;pointer-events:none;z-index:9999;mix-blend-mode:screen;}
+.cursor-dot{width:8px;height:8px;border-radius:50%;background:var(--neural);transform:translate(-50%,-50%);transition:transform .1s;}
+.cursor-ring{width:36px;height:36px;border-radius:50%;border:1px solid rgba(0,212,232,.4);transform:translate(-50%,-50%);transition:transform .08s, width .2s, height .2s, opacity .2s;}
+
+/* ── NEURAL CANVAS ── */
+#neuralCanvas{position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.45;}
+
+/* ── NAV ── */
+nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;height:68px;padding:0 48px;background:rgba(2,6,16,.85);border-bottom:1px solid var(--border);backdrop-filter:blur(20px);}
+.nav-brand{display:flex;align-items:center;gap:12px;text-decoration:none;}
+.nav-logo-mark{width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg, var(--neural), var(--pulse));display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;flex-shrink:0;}
+.nav-logo-mark::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 30% 30%, rgba(255,255,255,.2), transparent 60%);}
+.nav-logo-mark svg{width:20px;height:20px;fill:none;stroke:rgba(2,6,16,.9);stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+.nav-logotype{font-family:var(--fd);font-size:20px;font-weight:800;letter-spacing:1px;color:var(--t1);}
+.nav-logotype span{color:var(--neural);}
+.nav-links{display:flex;align-items:center;gap:26px;}
+.nav-links a{font-family:var(--fb);font-size:16px;font-weight:500;color:#d1d5db;text-decoration:none;letter-spacing:.2px;transition:color .2s;}
+.nav-links a:hover{color:var(--t1);}
+.nav-cta{display:flex;align-items:center;gap:10px;}
+.btn-ghost{font-family:var(--fb);font-size:13px;font-weight:500;padding:8px 20px;border-radius:8px;border:1px solid var(--border2);background:transparent;color:var(--t2);cursor:none;text-decoration:none;transition:all .2s;}
+.btn-ghost:hover{border-color:var(--neural);color:var(--neural);}
+.btn-primary{font-family:var(--fb);font-size:13px;font-weight:600;padding:9px 22px;border-radius:8px;border:none;background:linear-gradient(135deg, var(--neural), var(--pulse));color:var(--void);cursor:none;text-decoration:none;transition:all .25s;position:relative;overflow:hidden;}
+.btn-primary::before{content:'';position:absolute;inset:0;background:rgba(255,255,255,.15);opacity:0;transition:opacity .2s;}
+.btn-primary:hover::before{opacity:1;}
+.nav-mob-btn{display:none;background:none;border:none;cursor:none;padding:4px;}
+.nav-mob-btn svg{width:22px;height:22px;stroke:var(--t2);fill:none;stroke-width:2;stroke-linecap:round;}
+
+/* ── HERO ── */
+.hero{position:relative;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:140px 48px 80px;text-align:center;overflow:hidden;}
+.hero-glow-a{position:absolute;top:-100px;left:50%;transform:translateX(-50%);width:900px;height:600px;border-radius:50%;background:radial-gradient(ellipse, rgba(0,212,232,.08) 0%, transparent 70%);pointer-events:none;}
+.hero-glow-b{position:absolute;top:100px;left:15%;width:400px;height:400px;border-radius:50%;background:radial-gradient(ellipse, rgba(108,159,255,.06) 0%, transparent 70%);pointer-events:none;}
+.hero-badge{display:inline-flex;align-items:center;gap:8px;padding:6px 16px 6px 8px;border-radius:100px;background:rgba(0,212,232,.06);border:1px solid rgba(0,212,232,.25);font-family:var(--fm);font: size 10px;px;color:var(--neural);letter-spacing:2px;margin-bottom:32px;animation:fadeUp .7s ease both;}
+.hero-badge .pulse-dot{width:18px;height:18px;border-radius:50%;background:rgba(0,212,232,.15);display:flex;align-items:center;justify-content:center;}
+.hero-badge .pulse-dot::after{content:'';width:6px;height:6px;border-radius:50%;background:var(--neural);animation:blink 1.4s infinite;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+.hero h1{font-family:var(--fd);font-size:clamp(36px,6.5vw,82px);font-weight:800;line-height:1.0;letter-spacing:-2px;color:var(--t1);margin-bottom:20px;animation:fadeUp .8s .1s ease both;max-width:900px;}
+.hero h1 .line-neural{display:block;background:linear-gradient(90deg, var(--neural3) 0%, var(--neural) 40%, var(--pulse) 100%);background-size:200% auto;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:shimmer 5s linear 1s infinite;}
+@keyframes shimmer{from{background-position:200% center}to{background-position:-200% center}}
+.hero-sub{max-width:620px;font-size:16px;font-weight:400;line-height:1.75;color:var(--t2);margin:0 auto 20px;animation:fadeUp .8s .2s ease both;}
+.hero-social-proof{font-family:var(--fm);font-size:11px;color:var(--t3);margin-bottom:44px;animation:fadeUp .8s .25s ease both;letter-spacing:.5px;}
+.hero-social-proof span{color:var(--neural);}
+.hero-actions{display:flex;align-items:center;justify-content:center;gap:14px;flex-wrap:wrap;margin-bottom:64px;animation:fadeUp .8s .35s ease both;}
+.btn-hero-fill{font-family:var(--fb);font-size:15px;font-weight:600;padding:14px 34px;border-radius:10px;border:none;background:linear-gradient(135deg, var(--neural) 0%, var(--pulse) 100%);color:var(--void);cursor:none;text-decoration:none;transition:all .3s;position:relative;overflow:hidden;box-shadow:0 0 32px rgba(0,212,232,.2),0 0 64px rgba(108,159,255,.1);}
+.btn-hero-fill::before{content:'';position:absolute;inset:0;background:rgba(255,255,255,.2);opacity:0;transition:opacity .25s;}
+.btn-hero-fill:hover::before{opacity:1;}
+.btn-hero-fill:hover{transform:translateY(-2px);box-shadow:0 8px 40px rgba(0,212,232,.3),0 0 80px rgba(108,159,255,.15);}
+.btn-hero-outline{font-family:var(--fb);font-size:15px;font-weight:500;padding:14px 34px;border-radius:10px;background:transparent;color:var(--t1);border:1px solid var(--border2);cursor:none;text-decoration:none;transition:all .25s;}
+.btn-hero-outline:hover{border-color:var(--neural);color:var(--neural);}
+
+/* ── TICKER ── */
+.ticker-wrap{width:min(960px,92vw);border:1px solid var(--border);border-radius:12px;background:rgba(10,22,48,.8);overflow:hidden;animation:fadeUp .8s .45s ease both;backdrop-filter:blur(8px);}
+.ticker-bar{display:flex;align-items:center;padding:7px 16px;border-bottom:1px solid var(--border);background:rgba(0,212,232,.03);}
+.ticker-dot{width:6px;height:6px;border-radius:50%;background:var(--neural);margin-right:8px;animation:blink 1.4s infinite;}
+.ticker-label{font-family:var(--fm);font-size:9px;letter-spacing:2px;color:var(--neural);}
+.ticker-identity{font-family:var(--fm);font-size:9px;color:var(--t3);margin-left:12px;}
+.ticker-time{font-family:var(--fm);font-size:9px;color:var(--t3);margin-left:auto;}
+.ticker-scroll{overflow:hidden;height:44px;position:relative;}
+.ticker-track{display:flex;gap:0;animation:ticker 24s linear infinite;white-space:nowrap;width:max-content;}
+.tick{display:inline-flex;align-items:center;gap:7px;padding:0 22px;border-right:1px solid var(--border);height:44px;font-family:var(--fm);font-size:11px;}
+.tick-key{color:var(--t3);}
+.tick-val{font-weight:500;}
+.tick-val.ok{color:var(--neural);}
+.tick-val.warn{color:var(--amber);}
+.tick-val.crit{color:var(--red);}
+@keyframes ticker{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+
+/* SPACEBORN STYLE HERO TEXT */
+
+.hero-title-main{
+    font-weight: 800;
+    letter-spacing: -2px;
+
+    background: linear-gradient(
+        270deg,
+        #9e9a9a,
+        #cfd8e3,
+        #1f354d
+    );
+
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+.hero-title-main{
+    background-size: 200% auto;
+
+    animation: shine 6s linear infinite;
+}
+
+@keyframes shine {
+    from {
+        background-position: 200% center;
+    }
+    to {
+        background-position: -200% center;
+    }
+}
+
+.hero-beyond {
+    font-size: 12px;
+    letter-spacing: 0.35em;
+    color: var(--t3);
+    margin-top: 10px;
+}
+
+.hero-wide{
+    font-size: clamp(24px, 3vw, 36px);
+
+    letter-spacing: 0.5em;
+
+    background: linear-gradient(
+        180deg,
+        #9fb3c8,
+        #5f738a
+    );
+
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.hero-subtitle-new {
+    font-size: 16px;
+    color: var(--t2);
+    margin-top: 18px;
+    max-width: 640px;
+}
+
+/* ── STATS BAR ── */
+.statsbar{display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--border);border-bottom:1px solid var(--border);background:var(--deep);position:relative;z-index:1;}
+.stat{padding:30px 24px;text-align:center;border-right:1px solid var(--border);position:relative;}
+.stat:last-child{border-right:none;}
+.stat::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--neural),transparent);opacity:0;transition:opacity .4s;}
+.stat:hover::before{opacity:1;}
+.stat-num{font-family:var(--fd);font-size:44px;font-weight:800;background:linear-gradient(135deg, var(--neural), var(--pulse));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1;}
+.stat-label{font-size:11.5px;color:var(--t2);margin-top:8px;letter-spacing:.3px;font-weight:400;}
+
+
+/* ── SECTION COMMONS ── */
+.container{max-width:1200px;margin:0 auto;}
+.section-eyebrow{display:inline-flex;align-items:center;gap:8px;font-family:var(--fm);font-size:9.5px;letter-spacing:2.5px;color:var(--neural);padding:4px 12px;border:1px solid rgba(0,212,232,.2);border-radius:4px;margin-bottom:20px;}
+.section-h{font-family:var(--fd);font-size:clamp(30px,4.5vw,50px);font-weight:800;line-height:1;letter-spacing:-1px;color:var(--t1);margin-bottom:14px;}
+.section-h em{font-style:normal;color:var(--neural);}
+.section-p{font-size:15px;font-weight:400;line-height:1.7;color:var(--t2);max-width:500px;}
+
+/* ── DASHBOARD SHOWCASE ── */
+.dashboard-section{background:var(--bg);padding:96px 48px;border-top:1px solid var(--border);}
+.dash-inner{display:grid;grid-template-columns:1fr 1.4fr;gap:72px;align-items:center;margin-top:56px;}
+.dash-features{display:flex;flex-direction:column;gap:20px;}
+.dash-feat{display:flex;gap:18px;padding:20px;border:1px solid var(--border);border-radius:12px;transition:border-color .3s,background .3s;}
+.dash-feat:hover{border-color:var(--border2);background:rgba(0,212,232,.03);}
+.dash-feat-icon{width:42px;height:42px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.dash-feat-icon svg{width:20px;height:20px;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
+.dfi-a{background:rgba(0,212,232,.1);} .dfi-a svg{stroke:var(--neural);}
+.dfi-b{background:rgba(108,159,255,.1);} .dfi-b svg{stroke:var(--pulse);}
+.dfi-c{background:rgba(245,166,35,.1);} .dfi-c svg{stroke:var(--amber);}
+.dfi-d{background:rgba(45,212,170,.1);} .dfi-d svg{stroke:var(--green);}
+.dash-feat-text h4{font-family:var(--fd);font-size:15px;font-weight:700;color:var(--t1);margin-bottom:5px;}
+.dash-feat-text p{font-size:12.5px;color:var(--t2);line-height:1.55;}
+
+/* ── MINI DASHBOARD ── */
+.mini-dashboard{background:var(--card);border:1px solid var(--border);border-radius:16px;overflow:hidden;box-shadow:0 32px 80px rgba(0,0,0,.5);}
+.mini-hdr{display:flex;align-items:center;justify-content:space-between;padding:12px 18px;border-bottom:1px solid var(--border);background:rgba(0,212,232,.03);}
+.mini-hdr-left{display:flex;align-items:center;gap:8px;font-family:var(--fm);font-size:9px;color:var(--neural);letter-spacing:1.5px;}
+.mini-live-dot{width:5px;height:5px;border-radius:50%;background:var(--neural);animation:blink 1.4s infinite;}
+.mini-brand{font-family:var(--fd);font-size:11px;font-weight:700;color:var(--t3);letter-spacing:1px;}
+.mini-cards{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--border);}
+.mini-card{background:var(--card);padding:14px 16px;}
+.mini-card-l{font-size:9px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--t3);margin-bottom:6px;}
+.mini-card-v{font-family:var(--fm);font-size:22px;font-weight:500;}
+.mini-card-v.teal{color:var(--neural);}
+.mini-card-v.amber{color:var(--amber);}
+.mini-card-v.blue{color:var(--pulse);}
+.mini-card-v.green{color:var(--green);}
+.mini-card-u{font-size:11px;color:var(--t3);}
+.mini-bar-row{padding:14px 16px;border-top:1px solid var(--border);}
+.mini-bar-label{display:flex;justify-content:space-between;font-family:var(--fm);font-size:9px;color:var(--t2);margin-bottom:5px;}
+.mini-bar-track{height:3px;background:var(--border);border-radius:2px;}
+.mini-bar-fill{height:100%;border-radius:2px;transition:width 2s ease;}
+.mini-alarms{padding:14px 16px;border-top:1px solid var(--border);}
+.mini-alarm{display:flex;align-items:center;gap:10px;padding:7px 10px;border-radius:6px;margin-bottom:6px;font-family:var(--fm);font-size:10px;}
+.mini-alarm:last-child{margin-bottom:0;}
+.alarm-warn{background:rgba(245,166,35,.08);border:1px solid rgba(245,166,35,.2);color:var(--amber);}
+.alarm-crit{background:rgba(255,77,106,.08);border:1px solid rgba(255,77,106,.2);color:var(--red);}
+.alarm-ok{background:rgba(0,212,232,.06);border:1px solid rgba(0,212,232,.15);color:var(--neural);}
+.alarm-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0;background:currentColor;}
+.alarm-next{margin-left:auto;font-size:9px;opacity:.6;}
+
+/* ── ECONOMIC IMPACT ── */
+.economic{background:var(--bg2);padding:96px 48px;border-top:1px solid var(--border);}
+.econ-top{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1px;background:var(--border);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:60px;}
+.econ-metric{background:var(--card);padding:40px 32px;text-align:center;position:relative;}
+.econ-metric::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--neural),transparent);}
+.econ-val{font-family:var(--fd);font-size:clamp(36px,5vw,60px);font-weight:800;line-height:1;background:linear-gradient(135deg, var(--neural3), var(--neural));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.econ-label{font-family:var(--fm);font-size:10px;letter-spacing:1.5px;color:var(--t2);margin-top:10px;}
+.econ-sub{font-size:11px;color:var(--t3);margin-top:4px;}
+
+/* reactive vs predictive */
+.vs-grid{display:grid;grid-template-columns:1fr auto 1fr;gap:24px;align-items:stretch;}
+.vs-card{border-radius:14px;padding:36px;border:1px solid var(--border);}
+.vs-reactive{background:rgba(255,77,106,.04);border-color:rgba(255,77,106,.2);}
+.vs-predictive{background:rgba(0,212,232,.04);border-color:rgba(0,212,232,.2);}
+.vs-label{font-family:var(--fm);font-size:9px;letter-spacing:2px;margin-bottom:14px;}
+.vs-label.red{color:var(--red);}
+.vs-label.teal{color:var(--neural);}
+.vs-title{font-family:var(--fd);font-size:22px;font-weight:700;color:var(--t1);margin-bottom:20px;}
+.vs-flow{display:flex;flex-direction:column;gap:8px;}
+.vs-step{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--t2);}
+.vs-step-icon{width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:12px;}
+.vs-icon-red{background:rgba(255,77,106,.12);color:var(--red);}
+.vs-icon-teal{background:rgba(0,212,232,.12);color:var(--neural);}
+.vs-cost{margin-top:20px;padding:14px;border-radius:8px;font-family:var(--fm);font-size:12px;font-weight:500;}
+.vs-cost-bad{background:rgba(255,77,106,.1);color:var(--red);}
+.vs-cost-good{background:rgba(0,212,232,.1);color:var(--neural);}
+.vs-divider{display:flex;align-items:center;justify-content:center;font-family:var(--fd);font-size:28px;font-weight:800;color:var(--t3);}
+
+/* ── PERSONAS ── */
+.personas{background:var(--void);padding:96px 48px;border-top:1px solid var(--border);}
+.personas-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:56px;}
+.persona-card{border:1px solid var(--border);border-radius:16px;padding:40px 32px;position:relative;overflow:hidden;transition:border-color .3s,transform .3s;}
+.persona-card:hover{border-color:var(--border2);transform:translateY(-4px);}
+.persona-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;}
+.persona-pm::before{background:linear-gradient(90deg, var(--neural), var(--neural3));}
+.persona-re::before{background:linear-gradient(90deg, var(--pulse), var(--neural));}
+.persona-me::before{background:linear-gradient(90deg, var(--green), var(--neural));}
+.persona-tag{font-family:var(--fm);font-size:9px;letter-spacing:2px;color:var(--neural);margin-bottom:24px;display:block;}
+.persona-icon-wrap{width:60px;height:60px;border-radius:14px;display:flex;align-items:center;justify-content:center;margin-bottom:20px;border:1px solid var(--border);}
+.persona-icon-wrap svg{width:28px;height:28px;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;stroke:var(--neural);}
+.persona-name{font-family:var(--fd);font-size:22px;font-weight:700;color:var(--t1);margin-bottom:10px;}
+.persona-tagline{font-size:14px;font-weight:600;color:var(--neural);margin-bottom:14px;line-height:1.4;}
+.persona-desc{font-size:13px;color:var(--t2);line-height:1.65;}
+.persona-benefit{margin-top:20px;padding:12px 16px;background:rgba(0,212,232,.05);border:1px solid rgba(0,212,232,.12);border-radius:8px;font-family:var(--fm);font-size:11px;color:var(--lgrey);}
+
+/* ── ADAPTIVE ADVANTAGE (TECH TRUST) ── */
+.adaptive{background:var(--bg);padding:96px 48px;border-top:1px solid var(--border);}
+.adaptive-inner{display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:center;margin-top:56px;}
+.adv-pillars{display:flex;flex-direction:column;gap:20px;}
+.adv-pillar{padding:24px;border:1px solid var(--border);border-radius:12px;transition:border-color .3s;}
+.adv-pillar:hover{border-color:var(--border2);}
+.adv-pillar-header{display:flex;align-items:center;gap:14px;margin-bottom:10px;}
+.adv-num{font-family:var(--fm);font-size:10px;color:var(--neural);letter-spacing:1px;}
+.adv-h{font-family:var(--fd);font-size:17px;font-weight:700;color:var(--t1);}
+.adv-p{font-size:13px;color:var(--t2);line-height:1.6;}
+.adv-badge{display:inline-flex;font-family:var(--fm);font-size:9px;color:var(--neural);padding:2px 8px;border:1px solid rgba(0,212,232,.25);border-radius:3px;margin-top:8px;letter-spacing:1px;}
+.ai-diagram{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:32px;overflow:hidden;}
+.ai-diagram-title{font-family:var(--fm);font-size:9px;letter-spacing:2px;color:var(--neural);margin-bottom:24px;}
+.ai-accuracy{text-align:center;margin-bottom:28px;}
+.ai-acc-num{font-family:var(--fd);font-size:64px;font-weight:800;background:linear-gradient(135deg,var(--neural3),var(--neural));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1;}
+.ai-acc-label{font-size:12px;color:var(--t2);margin-top:4px;}
+.ai-models{display:flex;flex-direction:column;gap:10px;}
+.ai-model{display:flex;align-items:center;gap:12px;}
+.ai-model-label{font-family:var(--fm);font-size:10px;color:var(--t2);min-width:36px;letter-spacing:.5px;}
+.ai-model-bar-track{flex:1;height:4px;background:var(--border);border-radius:2px;}
+.ai-model-bar-fill{height:100%;border-radius:2px;transition:width 2s ease;}
+.ai-model-pct{font-family:var(--fm);font-size:10px;color:var(--t2);min-width:36px;text-align:right;}
+.integrations{margin-top:24px;padding-top:20px;border-top:1px solid var(--border);}
+.int-label{font-family:var(--fm);font-size:9px;letter-spacing:2px;color:var(--t3);margin-bottom:12px;}
+.int-chips{display:flex;gap:8px;flex-wrap:wrap;}
+.int-chip{font-family:var(--fm);font-size:10px;padding:5px 12px;border-radius:5px;background:var(--bg2);border:1px solid var(--border);color:var(--t2);}
+
+/* ── IDENTITY / HOW IT WORKS ── */
+.identity{background:var(--void);padding:100px 48px;position:relative;overflow:hidden;border-top:1px solid var(--border);}
+.identity-bg{position:absolute;right:-100px;top:50%;transform:translateY(-50%);width:600px;height:600px;border-radius:50%;background:radial-gradient(ellipse, rgba(108,159,255,.07) 0%, transparent 70%);pointer-events:none;}
+.id-inner{max-width:1200px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:center;}
+.id-kicker{font-family:var(--fm);font-size:10px;letter-spacing:2.5px;color:var(--neural);margin-bottom:20px;}
+.id-h{font-family:var(--fd);font-size:clamp(36px,5vw,58px);font-weight:800;line-height:.95;letter-spacing:-1px;color:var(--t1);margin-bottom:24px;}
+.id-h em{font-style:normal;color:var(--neural);}
+.id-p{font-size:15px;font-weight:400;line-height:1.75;color:var(--t2);margin-bottom:32px;}
+.id-pillars{display:flex;flex-direction:column;gap:16px;}
+.pillar{display:flex;align-items:flex-start;gap:16px;padding:16px;border:1px solid var(--border);border-radius:10px;transition:border-color .3s;}
+.pillar:hover{border-color:var(--border2);}
+.pillar-icon{width:36px;height:36px;border-radius:8px;flex-shrink:0;display:flex;align-items:center;justify-content:center;}
+.pillar-icon svg{width:18px;height:18px;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
+.pi-neural{background:rgba(0,212,232,.1);} .pi-neural svg{stroke:var(--neural);}
+.pi-pulse{background:rgba(108,159,255,.1);} .pi-pulse svg{stroke:var(--pulse);}
+.pi-signal{background:rgba(255,107,53,.1);} .pi-signal svg{stroke:var(--signal);}
+.pillar-h{font-family:var(--fb);font-size:13px;font-weight:600;color:var(--t1);margin-bottom:4px;}
+.pillar-p{font-size:12px;color:var(--t2);line-height:1.5;}
+#neuronDiagram{width:100%;max-width:440px;height:440px;}
+
+/* ── FEATURES ── */
+.features{background:var(--bg);padding:96px 48px;border-top:1px solid var(--border);}
+.feat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-top:56px;}
+.feat-card{background:var(--card);padding:34px 28px;position:relative;overflow:hidden;transition:background .3s;}
+.feat-card:hover{background:var(--bg2);}
+.feat-card::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--neural),transparent);opacity:0;transition:opacity .4s;}
+.feat-card:hover::after{opacity:1;}
+.feat-icon{width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;margin-bottom:22px;}
+.feat-icon svg{width:22px;height:22px;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;}
+.fi-a{background:rgba(0,212,232,.1);} .fi-a svg{stroke:var(--neural);}
+.fi-b{background:rgba(108,159,255,.1);} .fi-b svg{stroke:var(--pulse);}
+.fi-c{background:rgba(245,166,35,.1);} .fi-c svg{stroke:var(--amber);}
+.fi-d{background:rgba(45,212,170,.1);} .fi-d svg{stroke:var(--green);}
+.feat-h{font-family:var(--fd);font-size:19px;font-weight:700;color:var(--t1);margin-bottom:10px;letter-spacing:.2px;}
+.feat-p{font-size:13px;font-weight:400;line-height:1.65;color:var(--t2);}
+.feat-number{position:absolute;top:16px;right:20px;font-family:var(--fm);font-size:10px;color:var(--border2);}
+
+/* ── HOW IT WORKS ── */
+.how{background:var(--bg2);padding:96px 48px;border-top:1px solid var(--border);}
+.how-inner{display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:center;}
+.how-steps{display:flex;flex-direction:column;gap:0;}
+.step{display:flex;gap:20px;padding:26px 0;border-bottom:1px solid var(--border);}
+.step:last-child{border-bottom:none;}
+.step-num{font-family:var(--fm);font-size:10px;color:var(--neural);letter-spacing:1px;min-width:28px;padding-top:3px;font-weight:500;}
+.step-h{font-family:var(--fd);font-size:18px;font-weight:700;color:var(--t1);margin-bottom:6px;}
+.step-p{font-size:13px;font-weight:400;line-height:1.6;color:var(--t2);}
+.step-tag{display:inline-block;font-family:var(--fm);font-size:9px;letter-spacing:1px;color:var(--pulse);padding:2px 8px;border:1px solid rgba(108,159,255,.25);border-radius:3px;margin-top:8px;}
+
+.logo-main {
+  font-family: "Montserrat", sans-serif;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+}
+
+/* ── USE CASES ── */
+.usecases{background:var(--void);padding:96px 48px;border-top:1px solid var(--border);}
+.uc-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-top:56px;}
+.uc-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:34px;display:flex;gap:22px;transition:border-color .3s,transform .3s;cursor:default;position:relative;overflow:hidden;}
+.uc-card::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg, rgba(0,212,232,.03), transparent);opacity:0;transition:opacity .4s;}
+.uc-card:hover::before{opacity:1;}
+.uc-card:hover{border-color:var(--border2);transform:translateY(-3px);}
+.uc-num{font-family:var(--fm);font-size:28px;font-weight:400;color:var(--border2);line-height:1;min-width:34px;padding-top:4px;transition:color .3s;}
+.uc-card:hover .uc-num{color:var(--neural);}
+.uc-h{font-family:var(--fd);font-size:22px;font-weight:700;color:var(--t1);margin-bottom:8px;letter-spacing:.2px;}
+.uc-p{font-size:13px;font-weight:400;line-height:1.65;color:var(--t2);}
+.uc-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:14px;}
+.tag{font-family:var(--fm);font-size:9px;letter-spacing:.8px;padding:3px 9px;border-radius:4px;background:rgba(0,212,232,.06);color:var(--neural);border:1px solid rgba(0,212,232,.18);}
+
+/* ── TECH STACK ── */
+.tech{background:var(--bg2);border-top:1px solid var(--border);border-bottom:1px solid var(--border);}
+.tech-inner{display:flex;align-items:center;justify-content:space-between;gap:24px;flex-wrap:wrap;padding:28px 0;}
+.tech-label{font-family:var(--fm);font-size:9.5px;color:var(--t3);letter-spacing:2.5px;white-space:nowrap;}
+.tech-chips{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.chip{font-family:var(--fm);font-size:11px;font-weight:400;padding:7px 14px;border-radius:6px;letter-spacing:.3px;background:var(--card);border:1px solid var(--border);color:var(--t2);transition:border-color .2s,color .2s;}
+.chip:hover{border-color:var(--neural);color:var(--neural);}
+
+/* ── CLOSING CTA ── */
+.cta{background:var(--void);text-align:center;padding:100px 48px;}
+.cta-box{max-width:800px;margin:0 auto;border:1px solid var(--border);border-radius:20px;padding:72px 56px;background:var(--bg);position:relative;overflow:hidden;}
+.cta-glow-a{position:absolute;top:-100px;left:50%;transform:translateX(-50%);width:500px;height:300px;border-radius:50%;background:radial-gradient(circle, rgba(0,212,232,.1) 0%, transparent 70%);pointer-events:none;}
+.cta-glow-b{position:absolute;bottom:-100px;right:-50px;width:300px;height:300px;border-radius:50%;background:radial-gradient(circle, rgba(108,159,255,.08) 0%, transparent 70%);pointer-events:none;}
+.cta-badge{display:inline-flex;align-items:center;gap:7px;font-family:var(--fm);font-size:9px;letter-spacing:2px;color:var(--neural);padding:4px 14px;border:1px solid rgba(0,212,232,.2);border-radius:100px;margin-bottom:24px;}
+.cta h2{font-family:var(--fd);font-size:clamp(28px,4.5vw,52px);font-weight:800;line-height:1;color:var(--t1);margin-bottom:18px;letter-spacing:-1px;}
+.cta h2 em{font-style:normal;color:var(--neural);}
+.cta-quote{font-size:16px;font-style:italic;color:var(--t2);max-width:520px;margin:0 auto 12px;line-height:1.7;}
+.cta-quote-attr{font-family:var(--fm);font-size:10px;color:var(--t3);margin-bottom:36px;}
+.cta-final-line{font-family:var(--fd);font-size:clamp(18px,2.8vw,28px);font-weight:700;color:var(--lgrey);margin-bottom:44px;letter-spacing:-.5px;}
+.cta-final-line em{color:var(--neural);font-style:normal;}
+.cta-btns{display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;}
+
+/* ── FOOTER ── */
+footer{border-top:1px solid var(--border);padding:36px 48px;background:var(--void);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;}
+.foot-brand{display:flex;align-items:center;gap:10px;}
+.foot-logo-mark{width:26px;height:26px;border-radius:6px;background:linear-gradient(135deg,var(--neural),var(--pulse));display:flex;align-items:center;justify-content:center;}
+.foot-logo-mark svg{width:13px;height:13px;fill:none;stroke:var(--void);stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;}
+.foot-logotype{font-family:var(--fd);font-size:14px;font-weight:800;letter-spacing:1.5px;color:var(--t2);}
+.foot-links{display:flex;gap:24px;}
+.foot-links a{font-size:12px;color:var(--t3);text-decoration:none;transition:color .2s;}
+.foot-links a:hover{color:var(--neural);}
+.foot-copy{font-family:var(--fm);font-size:10px;color:var(--t3);}
+
+/* ── REVEAL ── */
+.reveal{opacity:0;transform:translateY(28px);transition:opacity .65s ease,transform .65s ease;}
+.reveal.in{opacity:1;transform:translateY(0);}
+.reveal-d1{transition-delay:.08s;} .reveal-d2{transition-delay:.16s;} .reveal-d3{transition-delay:.24s;} .reveal-d4{transition-delay:.32s;}
+
+/* ── RESPONSIVE ── */
+@media(max-width:1024px){
+  .feat-grid{grid-template-columns:repeat(2,1fr);}
+  .how-inner{grid-template-columns:1fr;gap:48px;}
+  .id-inner{grid-template-columns:1fr;gap:48px;}
+  .dash-inner{grid-template-columns:1fr;gap:48px;}
+  .adaptive-inner{grid-template-columns:1fr;gap:48px;}
+  .personas-grid{grid-template-columns:1fr;}
+  .vs-grid{grid-template-columns:1fr;} .vs-divider{display:none;}
+  .econ-top{grid-template-columns:1fr;}
+}
+@media(max-width:768px){
+  nav{padding:0 20px;}
+  .nav-links{display:none;}
+  .nav-cta .btn-ghost{display:none;}
+  .nav-mob-btn{display:block;}
+  .nav-links.open{display:flex;flex-direction:column;align-items:flex-start;gap:0;position:fixed;top:68px;left:0;right:0;background:rgba(2,6,16,.97);border-bottom:1px solid var(--border);padding:12px 20px 20px;z-index:99;}
+  .nav-links.open a{padding:12px 0;border-bottom:1px solid var(--border);width:100%;font-size:15px;}
+  .hero{padding:120px 20px 60px;}
+  .statsbar{grid-template-columns:repeat(2,1fr);}
+  .stat{padding:22px 16px;} .stat-num{font-size:32px;}
+  .features,.how,.usecases,.cta,.identity,.dashboard-section,.economic,.personas,.adaptive{padding:64px 20px;}
+  .feat-grid{grid-template-columns:1fr;border-radius:10px;}
+  .uc-grid{grid-template-columns:1fr;}
+  .personas-grid{grid-template-columns:1fr;}
+  .tech-inner{flex-direction:column;align-items:flex-start;}
+  .cta-box{padding:44px 24px;}
+  footer{flex-direction:column;align-items:flex-start;padding:24px 20px;}
+  .foot-links{flex-wrap:wrap;gap:16px;}
+  body{cursor:auto;}
+  .cursor{display:none;}
+}
+</style>
+</head>
+<body>
+
+<!-- CUSTOM CURSOR -->
+<div class="cursor" id="cursorDot"><div class="cursor-dot"></div></div>
+<div class="cursor" id="cursorRing"><div class="cursor-ring"></div></div>
+
+<!-- NEURAL BACKGROUND CANVAS -->
+<canvas id="neuralCanvas"></canvas>
+
+<!-- NAV -->
+<nav id="nav">
+  
+     <span class="logo-main">Avian<span>VISION</span></span>
+  </a>
+  <div class="nav-links" id="navLinks">
+    <a href="#dashboard">Command Center</a>
+    <a href="#economic">ROI</a>
+    <a href="#personas">Who We Serve</a>
+    <a href="#adaptive">Technology</a>
+    <a href="#usecases">Industries</a>
+  </div>
+  <div class="nav-cta">
+    <a href="contact.html" class="btn-ghost">Connect To Us</a>
+    <a href="login.html" class="btn-primary">Login</a>
+  </div>
+  <button class="nav-mob-btn" id="mobBtn" aria-label="Menu">
+    <svg viewBox="0 0 24 24" id="mobIcon"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+  </button>
+</nav>
+
+<!-- ════════════════════════════════════════════
+     SECTION 1: HERO — APEX AWARENESS
+═════════════════════════════════════════════ -->
+<section class="hero">
+  <div class="hero-glow-a"></div>
+  <div class="hero-glow-b"></div>
+  <div class="hero-badge">
+    <div class="pulse-dot"></div>
+    INTELLIGENT INDUSTRIAL SYSTEM
+  </div>
+ <h1 class="hero-title-main">
+    NERVOUS SYSTEM 
+</h1>
+
+<div class="hero-beyond">
+    BEYOND
+</div>
+
+<div class="hero-wide">
+    PREDICTIVE
+</div>
+  <p class="hero-sub">Detect failures early and act faster with an affordable predictive maintenance by converting avoided downtime into output.</p>
+  <div class="hero-actions">
+    <a href="" class="btn-hero-outline">Explore</a>
+    <a href="login.html" class="btn-hero-fill">Dashboard</a>
+    <a href="contact.html" class="btn-hero-outline">Get In Touch</a>
+  </div>
+  <div class="ticker-wrap">
+    <div class="ticker-bar">
+      <span class="ticker-dot"></span>
+      <span class="ticker-label">LIVE SYSTEMS</span>
+      <span class="ticker-identity">· REFLEXSENSE v2.4</span>
+      <span class="ticker-time" id="tickTime">--:--:--</span>
+    </div>
+    <div class="ticker-scroll">
+      <div class="ticker-track" id="tickerTrack"></div>
+    </div>
+  </div>
+</section>
+
+<!-- STATS -->
+<div class="statsbar">
+  <div class="stat reveal"><div class="stat-num">$304M</div><div class="stat-label">Capital Preserved</div></div>
+  <div class="stat reveal reveal-d1"><div class="stat-num">97,631</div><div class="stat-label">Hours of Downtime Avoided</div></div>
+  <div class="stat reveal reveal-d2"><div class="stat-num">93.4%</div><div class="stat-label">AI Prediction Accuracy</div></div>
+  <div class="stat reveal reveal-d3"><div class="stat-num">1 GWh</div><div class="stat-label">Energy Saved Per Year</div></div>
+</div>
+
+<!-- ════════════════════════════════════════════
+     SECTION 2: DASHBOARD SHOWCASE — ONE COMMAND CENTER
+═════════════════════════════════════════════ -->
+<section class="dashboard-section" id="dashboard">
+  <div class="container">
+    <div class="reveal"><span class="section-eyebrow">ONE COMMAND CENTER</span></div>
+    <h2 class="section-h reveal reveal-d1">The brain of<br>your <em>operation.</em></h2>
+    <p class="section-p reveal reveal-d2">Not just data — intelligence. Your dashboard is the living cortex that sees, understands, and acts on every signal from every machine, in real time.</p>
+    <div class="dash-inner">
+      <div class="dash-features reveal">
+        <div class="dash-feat">
+          <div class="dash-feat-icon dfi-a">
+            <svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          </div>
+          <div class="dash-feat-text">
+            <h4>Real-Time Senses</h4>
+            <p>Live telemetry for vibration, temperature, and light intensity gathered from rigid, industrial-grade MEMS sensors — streamed every 2 seconds.</p>
+          </div>
+        </div>
+        <div class="dash-feat">
+          <div class="dash-feat-icon dfi-b">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          </div>
+          <div class="dash-feat-text">
+            <h4>Actionable Alarms</h4>
+            <p>Alarms you can trust with clear next steps — so your team finds the fix faster. WARN and CRIT thresholds per sensor, escalating from amber to red.</p>
+          </div>
+        </div>
+        <div class="dash-feat">
+          <div class="dash-feat-icon dfi-c">
+            <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
+          </div>
+          <div class="dash-feat-text">
+            <h4>Device Health & Status</h4>
+            <p>Equipment status awareness at a glance — health scores, uptime bars, and reliable communication status for every connected node on your floor.</p>
+          </div>
+        </div>
+        <div class="dash-feat">
+          <div class="dash-feat-icon dfi-d">
+            <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          </div>
+          <div class="dash-feat-text">
+            <h4>Secure Infrastructure</h4>
+            <p>Secure and scalable data infrastructure powered by ngrok for safe data tunneling — your machine data travels encrypted, never exposed.</p>
+          </div>
+        </div>
+      </div>
+      <!-- LIVE MINI DASHBOARD -->
+      <div class="mini-dashboard reveal reveal-d2">
+        <div class="mini-hdr">
+          <div class="mini-hdr-left"><span class="mini-live-dot"></span>LIVE NEURAL FEED</div>
+          <span class="mini-brand">REFLEXSENSE</span>
+          <span style="font-family:var(--fm);font-size:9px;color:var(--t3)" id="miniTime">--:--:--</span>
+        </div>
+        <div class="mini-cards">
+          <div class="mini-card">
+            <div class="mini-card-l">Temperature</div>
+            <div class="mini-card-v teal" id="mTemp">--</div>
+            <div class="mini-card-u">°C</div>
+          </div>
+          <div class="mini-card">
+            <div class="mini-card-l">Vibration</div>
+            <div class="mini-card-v amber" id="mVib">--</div>
+            <div class="mini-card-u">mm/s</div>
+          </div>
+          <div class="mini-card">
+            <div class="mini-card-l">Light (LDR)</div>
+            <div class="mini-card-v blue" id="mLdr">--</div>
+            <div class="mini-card-u">lux</div>
+          </div>
+          <div class="mini-card">
+            <div class="mini-card-l">Humidity</div>
+            <div class="mini-card-v green" id="mHum">--</div>
+            <div class="mini-card-u">%RH</div>
+          </div>
+        </div>
+        <div class="mini-bar-row">
+          <div class="mini-bar-label"><span>Machine A — Motor</span><span id="mBarA">87%</span></div>
+          <div class="mini-bar-track"><div class="mini-bar-fill" id="mFillA" style="width:87%;background:var(--neural);"></div></div>
+        </div>
+        <div class="mini-bar-row">
+          <div class="mini-bar-label"><span>Machine B — Conveyor</span><span id="mBarB">61%</span></div>
+          <div class="mini-bar-track"><div class="mini-bar-fill" id="mFillB" style="width:61%;background:var(--amber);"></div></div>
+        </div>
+        <div class="mini-bar-row">
+          <div class="mini-bar-label"><span>Machine D — Pump</span><span id="mBarD">34%</span></div>
+          <div class="mini-bar-track"><div class="mini-bar-fill" id="mFillD" style="width:34%;background:var(--red);"></div></div>
+        </div>
+        <div class="mini-alarms">
+          <div class="mini-alarm alarm-crit"><span class="alarm-dot"></span>NERVE-B VIB — 71 mm/s exceeds CRIT threshold<span class="alarm-next">→ Inspect bearing</span></div>
+          <div class="mini-alarm alarm-warn"><span class="alarm-dot"></span>AXON-C TEMP — Rising trend +8°C / 4h<span class="alarm-next">→ Check coolant</span></div>
+          <div class="mini-alarm alarm-ok"><span class="alarm-dot"></span>NERVE-A — All systems nominal</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════
+     SECTION 3: ECONOMIC IMPACT — TURNING TIME INTO REVENUE
+═════════════════════════════════════════════ -->
+<section class="economic" id="economic">
+  <div class="container">
+    <div class="reveal"><span class="section-eyebrow">TURNING TIME INTO REVENUE</span></div>
+    <h2 class="section-h reveal reveal-d1">The cost of <em>reactive</em><br>maintenance is enormous.</h2>
+    <p class="section-p reveal reveal-d2" style="margin-bottom:52px;">Every hour of unplanned downtime is revenue lost, morale spent, and competitive ground surrendered. ReflexSense makes the math undeniable.</p>
+
+    <div class="econ-top reveal">
+      <div class="econ-metric">
+        <div class="econ-val">97,631</div>
+        <div class="econ-label">HOURS TURNED BACK INTO REVENUE</div>
+        <div class="econ-sub">Downtime avoided across active deployments</div>
+      </div>
+      <div class="econ-metric">
+        <div class="econ-val">1 GWh</div>
+        <div class="econ-label">ENERGY SAVED PER YEAR</div>
+        <div class="econ-sub">Leaner operations team, optimised load cycles</div>
+      </div>
+      <div class="econ-metric">
+        <div class="econ-val">40%</div>
+        <div class="econ-label">REDUCTION IN MAINTENANCE SPEND</div>
+        <div class="econ-sub">Fix only what needs fixing, only when it needs it</div>
+      </div>
+    </div>
+
+    <div class="vs-grid reveal" style="margin-top:40px;">
+      <div class="vs-card vs-reactive">
+        <div class="vs-label red">REACTIVE APPROACH</div>
+        <div class="vs-title">Machine Breaks → Repair</div>
+        <div class="vs-flow">
+          <div class="vs-step"><div class="vs-step-icon vs-icon-red">⚡</div>Unexpected failure mid-production</div>
+          <div class="vs-step"><div class="vs-step-icon vs-icon-red">🛑</div>Emergency shutdown, production halts</div>
+          <div class="vs-step"><div class="vs-step-icon vs-icon-red">📞</div>Rush-call technician, source spare parts</div>
+          <div class="vs-step"><div class="vs-step-icon vs-icon-red">⏳</div>4–48 hours of unplanned downtime</div>
+          <div class="vs-step"><div class="vs-step-icon vs-icon-red">📉</div>Cascading damage to downstream systems</div>
+        </div>
+        <div class="vs-cost vs-cost-bad">Avg. cost: $15,000–$260,000 per incident</div>
+      </div>
+      <div class="vs-divider">VS</div>
+      <div class="vs-card vs-predictive">
+        <div class="vs-label teal">PREDICTIVE APPROACH</div>
+        <div class="vs-title">Early Signal → Maintenance Before Breakdown</div>
+        <div class="vs-flow">
+          <div class="vs-step"><div class="vs-step-icon vs-icon-teal">📡</div>ReflexSense detects anomaly: vibration trend rising</div>
+          <div class="vs-step"><div class="vs-step-icon vs-icon-teal">🔔</div>Actionable alarm with clear next steps dispatched</div>
+          <div class="vs-step"><div class="vs-step-icon vs-icon-teal">🔧</div>Scheduled maintenance during planned downtime</div>
+          <div class="vs-step"><div class="vs-step-icon vs-icon-teal">✅</div>Machine repaired before failure, zero disruption</div>
+          <div class="vs-step"><div class="vs-step-icon vs-icon-teal">📈</div>Full production output maintained</div>
+        </div>
+        <div class="vs-cost vs-cost-good">Avg. cost: $500–$2,000 per intervention</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════
+     SECTION 4: PERSONAS — WHO WE SERVE
+═════════════════════════════════════════════ -->
+<section class="personas" id="personas">
+  <div class="container">
+    <div class="reveal"><span class="section-eyebrow">WHO WE SERVE</span></div>
+    <h2 class="section-h reveal reveal-d1">Built for every<br><em>decision-maker</em> on the floor.</h2>
+    <p class="section-p reveal reveal-d2" style="margin-bottom:0;">ReflexSense delivers what matters most to the people who matter most — at every level of the operation.</p>
+    <div class="personas-grid" style="margin-top:56px;">
+
+      <div class="persona-card persona-pm reveal">
+        <span class="persona-tag">PLANT MANAGER</span>
+        <div class="persona-icon-wrap">
+          <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        </div>
+        <div class="persona-name">Lead with Confidence.</div>
+        <div class="persona-tagline">Drive tangible results and make outcomes more predictable across every line.</div>
+        <p class="persona-desc">You're accountable for the entire floor. ReflexSense gives you a single view of every machine's health — so your weekly reports show progress, not post-mortems. OEE goes up. Surprises go down.</p>
+        <div class="persona-benefit">↑ OEE · Predictable output · Board-ready metrics</div>
+      </div>
+
+      <div class="persona-card persona-re reveal reveal-d1">
+        <span class="persona-tag">RELIABILITY ENGINEER</span>
+        <div class="persona-icon-wrap" style="border-color:rgba(108,159,255,.25);">
+          <svg viewBox="0 0 24 24" style="stroke:var(--pulse)"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07M8.46 8.46a5 5 0 0 0 0 7.07"/></svg>
+        </div>
+        <div class="persona-name">Own the Data.</div>
+        <div class="persona-tagline">Gain clarity on root causes and drive smarter decisions with 9-axis motion fusion.</div>
+        <p class="persona-desc">You live in the data. ReflexSense gives you the full vibration spectrum, temperature trends, and humidity drift — across all axes, all sensors, all history. Root cause analysis becomes conclusive, not speculative.</p>
+        <div class="persona-benefit" style="border-color:rgba(108,159,255,.2);color:var(--pulse);">9-axis MEMS fusion · Root cause clarity · Trend memory</div>
+      </div>
+
+      <div class="persona-card persona-me reveal reveal-d2">
+        <span class="persona-tag">MAINTENANCE ENGINEER</span>
+        <div class="persona-icon-wrap" style="border-color:rgba(45,212,170,.25);">
+          <svg viewBox="0 0 24 24" style="stroke:var(--green)"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+        </div>
+        <div class="persona-name">Stay Ahead of Failures.</div>
+        <div class="persona-tagline">Get a break. Keep machines running smoothly without the stress of sudden breakdowns.</div>
+        <p class="persona-desc">You're the last line of defence. ReflexSense turns reactive firefighting into planned, confident action. Alarms tell you exactly what's wrong and what to do first — so you sleep better, and machines run longer.</p>
+        <div class="persona-benefit" style="border-color:rgba(45,212,170,.2);color:var(--green);">Clear next steps · Scheduled work orders · Less stress</div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════
+     SECTION 5: ADAPTIVE ADVANTAGE — TECH TRUST
+═════════════════════════════════════════════ -->
+<section class="adaptive" id="adaptive">
+  <div class="container">
+    <div class="reveal"><span class="section-eyebrow">THE ADAPTIVE ADVANTAGE</span></div>
+    <h2 class="section-h reveal reveal-d1">Deep tech that<br><em>evolves</em> with you.</h2>
+    <p class="section-p reveal reveal-d2" style="margin-bottom:0;">Unlike static models that decay after deployment, our AI continuously learns from your machines — reaching precision that static rules can never match.</p>
+    <div class="adaptive-inner">
+      <div class="adv-pillars reveal">
+        <div class="adv-pillar">
+          <div class="adv-pillar-header">
+            <span class="adv-num">01</span>
+            <div class="adv-h">Adaptive Ensemble AI</div>
+          </div>
+          <p class="adv-p">Our system combines Deep Reinforcement Learning, Random Forest, and Gradient Boosted Machines in an ensemble that continues to evolve after deployment — not just at training time. Each machine's model adapts to its unique environment.</p>
+          <span class="adv-badge">DRL + RF + GBM ENSEMBLE</span>
+        </div>
+        <div class="adv-pillar">
+          <div class="adv-pillar-header">
+            <span class="adv-num">02</span>
+            <div class="adv-h">No Rip-and-Replace</div>
+          </div>
+          <p class="adv-p">Built to plug into the tools teams already use. ReflexSense integrates natively with SAP, Oracle NetSuite, Power BI, and your existing CMMS — adding intelligence without disrupting workflows.</p>
+          <span class="adv-badge">SAP · NETSUITE · POWER BI · CMMS</span>
+        </div>
+        <div class="adv-pillar">
+          <div class="adv-pillar-header">
+            <span class="adv-num">03</span>
+            <div class="adv-h">Rigid Industrial Hardware</div>
+          </div>
+          <p class="adv-p">Our devices are engineered to be rigid to temperature extremes, industrial vibration, and natural abstractions. MEMS-grade sensors rated for real shop-floor conditions — not lab environments.</p>
+          <span class="adv-badge">IP-RATED · MEMS-GRADE · INDUSTRIAL CERTIFIED</span>
+        </div>
+      </div>
+
+      <div class="ai-diagram reveal reveal-d2">
+        <div class="ai-diagram-title">ADAPTIVE ENSEMBLE MODEL PERFORMANCE</div>
+        <div class="ai-accuracy">
+          <div class="ai-acc-num">93.4%</div>
+          <div class="ai-acc-label">Prediction Accuracy (Post-Deployment Learning)</div>
+        </div>
+        <div class="ai-models">
+          <div class="ai-model">
+            <span class="ai-model-label">DRL</span>
+            <div class="ai-model-bar-track"><div class="ai-model-bar-fill" id="drlBar" style="width:0%;background:linear-gradient(90deg,var(--neural),var(--neural2));"></div></div>
+            <span class="ai-model-pct" id="drlPct">–</span>
+          </div>
+          <div class="ai-model">
+            <span class="ai-model-label">RF</span>
+            <div class="ai-model-bar-track"><div class="ai-model-bar-fill" id="rfBar" style="width:0%;background:linear-gradient(90deg,var(--pulse),var(--pulse2));"></div></div>
+            <span class="ai-model-pct" id="rfPct">–</span>
+          </div>
+          <div class="ai-model">
+            <span class="ai-model-label">GBM</span>
+            <div class="ai-model-bar-track"><div class="ai-model-bar-fill" id="gbmBar" style="width:0%;background:linear-gradient(90deg,var(--green),var(--neural2));"></div></div>
+            <span class="ai-model-pct" id="gbmPct">–</span>
+          </div>
+          <div class="ai-model">
+            <span class="ai-model-label" style="color:var(--neural);font-weight:500;">ENS</span>
+            <div class="ai-model-bar-track"><div class="ai-model-bar-fill" id="ensBar" style="width:0%;background:linear-gradient(90deg,var(--neural3),var(--neural));"></div></div>
+            <span class="ai-model-pct" id="ensPct" style="color:var(--neural);">–</span>
+          </div>
+        </div>
+        <div class="integrations">
+          <div class="int-label">NATIVE INTEGRATIONS</div>
+          <div class="int-chips">
+            <span class="int-chip">SAP</span>
+            <span class="int-chip">Oracle NetSuite</span>
+            <span class="int-chip">Power BI</span>
+            <span class="int-chip">CMMS</span>
+            <span class="int-chip">REST API</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════
+     IDENTITY: HOW IT WORKS
+═════════════════════════════════════════════ -->
+<section class="identity" id="identity">
+  <div class="identity-bg"></div>
+  <div class="id-inner container">
+    <div class="id-left reveal">
+      <p class="id-kicker">THE REFLEXSENSE IDENTITY</p>
+      <h2 class="id-h">Your machines<br>can <em>feel</em> now.</h2>
+      <p class="id-p">Just as the human nervous system senses, reacts, and learns — ReflexSense gives industrial machines the same biological intelligence. Sensors are your senses. Control algorithms are your reflexes. Data history is your machine's memory.</p>
+      <div class="id-pillars">
+        <div class="pillar reveal">
+          <div class="pillar-icon pi-neural">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1"/></svg>
+          </div>
+          <div class="pillar-text">
+            <div class="pillar-h">Sensory Layer — Feel Failures</div>
+            <div class="pillar-p">MEMS-grade sensors capture temperature, vibration, humidity, and light — the senses your machines never had.</div>
+          </div>
+        </div>
+        <div class="pillar reveal reveal-d1">
+          <div class="pillar-icon pi-pulse">
+            <svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          </div>
+          <div class="pillar-text">
+            <div class="pillar-h">Reflex Layer — Act Instantly</div>
+            <div class="pillar-p">Control algorithms respond to disturbances in milliseconds — the involuntary reflex arc of industrial automation.</div>
+          </div>
+        </div>
+        <div class="pillar reveal reveal-d2">
+          <div class="pillar-icon pi-signal">
+            <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+          </div>
+          <div class="pillar-text">
+            <div class="pillar-h">Memory Layer — Learn Patterns</div>
+            <div class="pillar-p">Historical analytics build operational memory — so your machines grow smarter with every cycle they run.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="id-right reveal reveal-d2" style="display:flex;align-items:center;justify-content:center;">
+      <svg id="neuronDiagram" viewBox="0 0 440 440" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <radialGradient id="ng1" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#00d4e8" stop-opacity=".2"/>
+            <stop offset="100%" stop-color="#00d4e8" stop-opacity="0"/>
+          </radialGradient>
+          <radialGradient id="ng2" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#6c9fff" stop-opacity=".15"/>
+            <stop offset="100%" stop-color="#6c9fff" stop-opacity="0"/>
+          </radialGradient>
+          <filter id="glow"><feGaussianBlur stdDeviation="3" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+          <filter id="glow2"><feGaussianBlur stdDeviation="6" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+        </defs>
+        <circle cx="220" cy="220" r="180" fill="url(#ng1)"/>
+        <line x1="220" y1="220" x2="380" y2="220" stroke="#00d4e8" stroke-width="2" stroke-opacity=".5" stroke-dasharray="6 4"/>
+        <line x1="220" y1="220" x2="90" y2="140" stroke="#00d4e8" stroke-width="1.5" stroke-opacity=".4"/>
+        <line x1="220" y1="220" x2="80" y2="220" stroke="#00d4e8" stroke-width="1.5" stroke-opacity=".35"/>
+        <line x1="220" y1="220" x2="100" y2="310" stroke="#00d4e8" stroke-width="1.5" stroke-opacity=".4"/>
+        <line x1="220" y1="220" x2="160" y2="90" stroke="#6c9fff" stroke-width="1.2" stroke-opacity=".4"/>
+        <line x1="220" y1="220" x2="155" y2="350" stroke="#6c9fff" stroke-width="1.2" stroke-opacity=".4"/>
+        <line x1="380" y1="220" x2="420" y2="185" stroke="#00d4e8" stroke-width="1.5" stroke-opacity=".5"/>
+        <line x1="380" y1="220" x2="420" y2="220" stroke="#00d4e8" stroke-width="1.5" stroke-opacity=".5"/>
+        <line x1="380" y1="220" x2="420" y2="255" stroke="#00d4e8" stroke-width="1.5" stroke-opacity=".5"/>
+        <circle cx="90" cy="140" r="12" fill="rgba(0,212,232,.1)" stroke="#00d4e8" stroke-width="1.5" filter="url(#glow)"/>
+        <text x="90" y="144" fill="#00d4e8" font-size="7" font-family="IBM Plex Mono" text-anchor="middle" opacity=".7">TEMP</text>
+        <circle cx="80" cy="220" r="12" fill="rgba(0,212,232,.1)" stroke="#00d4e8" stroke-width="1.5" filter="url(#glow)"/>
+        <text x="80" y="224" fill="#00d4e8" font-size="7" font-family="IBM Plex Mono" text-anchor="middle" opacity=".7">VIB</text>
+        <circle cx="100" cy="310" r="12" fill="rgba(0,212,232,.1)" stroke="#00d4e8" stroke-width="1.5" filter="url(#glow)"/>
+        <text x="100" y="314" fill="#00d4e8" font-size="7" font-family="IBM Plex Mono" text-anchor="middle" opacity=".7">HUM</text>
+        <circle cx="160" cy="90" r="10" fill="rgba(108,159,255,.1)" stroke="#6c9fff" stroke-width="1.2"/>
+        <text x="160" y="94" fill="#6c9fff" font-size="7" font-family="IBM Plex Mono" text-anchor="middle" opacity=".7">LDR</text>
+        <circle cx="155" cy="350" r="10" fill="rgba(108,159,255,.1)" stroke="#6c9fff" stroke-width="1.2"/>
+        <text x="155" y="354" fill="#6c9fff" font-size="7" font-family="IBM Plex Mono" text-anchor="middle" opacity=".7">ENV</text>
+        <circle cx="420" cy="185" r="5" fill="#00d4e8" opacity=".5"/>
+        <circle cx="420" cy="220" r="5" fill="#00d4e8" opacity=".7"/>
+        <circle cx="420" cy="255" r="5" fill="#00d4e8" opacity=".5"/>
+        <circle cx="380" cy="220" r="10" fill="rgba(0,212,232,.15)" stroke="#00d4e8" stroke-width="1.5"/>
+        <circle cx="220" cy="220" r="40" fill="url(#ng2)" stroke="url(#ng1)" stroke-width="0"/>
+        <circle cx="220" cy="220" r="32" fill="rgba(8,18,41,.9)" stroke="#00d4e8" stroke-width="2" filter="url(#glow2)"/>
+        <circle cx="220" cy="220" r="22" fill="rgba(0,212,232,.08)" stroke="#00d4e8" stroke-width="1" stroke-opacity=".5"/>
+        <text x="220" y="214" fill="#00d4e8" font-size="7" font-family="IBM Plex Mono" text-anchor="middle" font-weight="500">REFLEX</text>
+        <text x="220" y="225" fill="#00d4e8" font-size="7" font-family="IBM Plex Mono" text-anchor="middle" font-weight="500">SENSE</text>
+        <circle r="4" fill="#00d4e8" opacity=".9" filter="url(#glow)">
+          <animateMotion dur="2.5s" repeatCount="indefinite" path="M220,220 L380,220"/>
+          <animate attributeName="opacity" values="0;1;1;0" dur="2.5s" repeatCount="indefinite"/>
+        </circle>
+        <circle r="3" fill="#6c9fff" opacity=".7">
+          <animateMotion dur="3s" repeatCount="indefinite" begin="1.2s" path="M220,220 L90,140"/>
+          <animate attributeName="opacity" values="0;.8;.8;0" dur="3s" repeatCount="indefinite" begin="1.2s"/>
+        </circle>
+        <circle r="3" fill="#00d4e8" opacity=".7">
+          <animateMotion dur="2.8s" repeatCount="indefinite" begin="0.6s" path="M220,220 L100,310"/>
+          <animate attributeName="opacity" values="0;.8;.8;0" dur="2.8s" repeatCount="indefinite" begin="0.6s"/>
+        </circle>
+        <text x="56" y="132" fill="#00d4e8" font-size="8" font-family="IBM Plex Mono" opacity=".45">SENSOR</text>
+        <text x="390" y="218" fill="#00d4e8" font-size="8" font-family="IBM Plex Mono" opacity=".45">OUTPUT</text>
+        <text x="165" y="240" fill="#6c9fff" font-size="7" font-family="IBM Plex Mono" opacity=".35">DENDRITES</text>
+        <text x="275" y="215" fill="#00d4e8" font-size="7" font-family="IBM Plex Mono" opacity=".35">AXON</text>
+      </svg>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section class="features" id="features">
+  <div class="container">
+    <div class="reveal"><span class="section-eyebrow">CAPABILITIES</span></div>
+    <h2 class="section-h reveal reveal-d1">Built for <em>real industry.</em></h2>
+    <p class="section-p reveal reveal-d2">Every capability forged for the shop floor. Rugged, fast, and readable in milliseconds.</p>
+    <div class="feat-grid">
+      <div class="feat-card reveal">
+        <div class="feat-number">01</div>
+        <div class="feat-icon fi-a"><svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>
+        <div class="feat-h">Real-Time Sensing</div>
+        <p class="feat-p">Every 2 seconds, live readings from thermistors, vibration, LDR and humidity sensors stream into your dashboard — zero latency, zero guessing.</p>
+      </div>
+      <div class="feat-card reveal reveal-d1">
+        <div class="feat-number">02</div>
+        <div class="feat-icon fi-b"><svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg></div>
+        <div class="feat-h">Predictive Reflexes</div>
+        <p class="feat-p">Pattern recognition flags vibration trends, temperature spikes, and humidity drift before they cascade into failures. Catch it early, fix it cheap.</p>
+      </div>
+      <div class="feat-card reveal reveal-d2">
+        <div class="feat-number">03</div>
+        <div class="feat-icon fi-c"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div>
+        <div class="feat-h">Neural Alert System</div>
+        <p class="feat-p">Configurable WARN and CRIT thresholds per sensor. Alerts escalate from amber to red — visual signals that mirror biological stress responses.</p>
+      </div>
+      <div class="feat-card reveal reveal-d3">
+        <div class="feat-number">04</div>
+        <div class="feat-icon fi-d"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg></div>
+        <div class="feat-h">Command Dashboard</div>
+        <p class="feat-p">A live command center view — charts, health bars, and machine states. Responsive for phone, tablet, and control-room screen alike.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="how" id="how">
+  <div class="container">
+    <div class="how-inner">
+      <div>
+        <div class="reveal"><span class="section-eyebrow">NEURAL PIPELINE</span></div>
+        <h2 class="section-h reveal reveal-d1">From sensor<br>to <em>insight.</em></h2>
+        <p class="section-p reveal reveal-d2" style="margin-bottom:40px;">Four neural stages — sense, transmit, analyse, act — one seamless reflex arc from raw hardware to actionable decision.</p>
+        <div class="how-steps">
+          <div class="step reveal"><span class="step-num">01</span><div><div class="step-h">Sense</div><p class="step-p">RP2040 reads thermistors, vibration, LDR and humidity probes via MicroPython firmware. Machines feel their environment for the first time.</p><span class="step-tag">DENDRITE INPUT</span></div></div>
+          <div class="step reveal reveal-d1"><span class="step-num">02</span><div><div class="step-h">Transmit</div><p class="step-p">Readings pulse over a FastAPI server via secure Ngrok tunnel — the axon carrying signals from machine to brain, anywhere on Earth.</p><span class="step-tag">AXON SIGNAL</span></div></div>
+          <div class="step reveal reveal-d2"><span class="step-num">03</span><div><div class="step-h">Analyse</div><p class="step-p">The server stores history, computes health scores, and flags threshold crossings. This is the machine's cortex — building memory and context.</p><span class="step-tag">CORTEX PROCESS</span></div></div>
+          <div class="step reveal reveal-d3"><span class="step-num">04</span><div><div class="step-h">Act</div><p class="step-p">The live dashboard visualises every stream — charts, alerts, health bars — giving operators the motor response they need, instantly.</p><span class="step-tag">MOTOR RESPONSE</span></div></div>
+        </div>
+      </div>
+      <div class="mini-dashboard reveal reveal-d2">
+        <div class="mini-hdr">
+          <div class="mini-hdr-left"><span class="mini-live-dot"></span>LIVE NEURAL FEED</div>
+          <span class="mini-brand">REFLEXSENSE</span>
+          <span style="font-family:var(--fm);font-size:9px;color:var(--t3)" id="miniTime2">--:--:--</span>
+        </div>
+        <div class="mini-cards">
+          <div class="mini-card"><div class="mini-card-l">Temperature</div><div class="mini-card-v teal" id="mTemp2">--</div><div class="mini-card-u">°C</div></div>
+          <div class="mini-card"><div class="mini-card-l">Vibration</div><div class="mini-card-v amber" id="mVib2">--</div><div class="mini-card-u">mm/s</div></div>
+          <div class="mini-card"><div class="mini-card-l">Light (LDR)</div><div class="mini-card-v blue" id="mLdr2">--</div><div class="mini-card-u">lux</div></div>
+          <div class="mini-card"><div class="mini-card-l">Humidity</div><div class="mini-card-v green" id="mHum2">--</div><div class="mini-card-u">%RH</div></div>
+        </div>
+        <div class="mini-bar-row"><div class="mini-bar-label"><span>Machine A — Motor</span><span id="mBarA2">87%</span></div><div class="mini-bar-track"><div class="mini-bar-fill" id="mFillA2" style="width:87%;background:var(--neural);"></div></div></div>
+        <div class="mini-bar-row"><div class="mini-bar-label"><span>Machine B — Conveyor</span><span id="mBarB2">61%</span></div><div class="mini-bar-track"><div class="mini-bar-fill" id="mFillB2" style="width:61%;background:var(--amber);"></div></div></div>
+        <div class="mini-bar-row"><div class="mini-bar-label"><span>Machine D — Pump</span><span id="mBarD2">34%</span></div><div class="mini-bar-track"><div class="mini-bar-fill" id="mFillD2" style="width:34%;background:var(--red);"></div></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════
+     SECTION 6: INDUSTRY APPLICATIONS — VERSATILE PROTECTION
+═════════════════════════════════════════════ -->
+<section class="usecases" id="usecases">
+  <div class="container">
+    <div class="reveal"><span class="section-eyebrow">VERSATILE PROTECTION</span></div>
+    <h2 class="section-h reveal reveal-d1">One nervous system.<br><em>Every sector.</em></h2>
+    <p class="section-p reveal reveal-d2">Designed for operations that can't afford enterprise downtime — or enterprise pricing. The ReflexSense framework adapts to every environment.</p>
+    <div class="uc-grid">
+      <div class="uc-card reveal">
+        <div class="uc-num">01</div>
+        <div>
+          <div class="uc-h">Manufacturing</div>
+          <p class="uc-p">Preventing production line halts that lead to massive losses. Monitor motors, conveyors, compressors and pumps. Catch bearing wear through vibration trends before your line goes dark.</p>
+          <div class="uc-tags"><span class="tag">VIBRATION</span><span class="tag">TEMPERATURE</span><span class="tag">UPTIME</span><span class="tag">OEE</span></div>
+        </div>
+      </div>
+      <div class="uc-card reveal reveal-d1">
+        <div class="uc-num">02</div>
+        <div>
+          <div class="uc-h">Agriculture</div>
+          <p class="uc-p">Providing calculated solutions to save crops from weather-related revenue reversal. Track soil humidity, greenhouse temperature, and light intensity for data-driven irrigation and crop protection.</p>
+          <div class="uc-tags"><span class="tag">HUMIDITY</span><span class="tag">LIGHT (LDR)</span><span class="tag">CROP SAFETY</span></div>
+        </div>
+      </div>
+      <div class="uc-card reveal reveal-d2">
+        <div class="uc-num">03</div>
+        <div>
+          <div class="uc-h">Transportation & Railways</div>
+          <p class="uc-p">Monitoring point machines to detect degradation before failure. Continuously sense switching mechanisms and mechanical components — catching early degradation before it becomes a safety incident.</p>
+          <div class="uc-tags"><span class="tag">VIBRATION</span><span class="tag">REAL-TIME</span><span class="tag">SAFETY</span><span class="tag">ALERTS</span></div>
+        </div>
+      </div>
+      <div class="uc-card reveal reveal-d3">
+        <div class="uc-num">04</div>
+        <div>
+          <div class="uc-h">Healthcare & Facilities</div>
+          <p class="uc-p">Ensuring stability in critical automation environments. HVAC systems, refrigeration units and clinical automation stay within safe operating parameters — environmental drift triggers alerts before patient safety is affected.</p>
+          <div class="uc-tags"><span class="tag">TEMPERATURE</span><span class="tag">HUMIDITY</span><span class="tag">COMPLIANCE</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TECH STACK -->
+<div class="tech">
+  <div class="container" style="padding:0;">
+    <div class="tech-inner">
+      <span class="tech-label">NEURAL STACK</span>
+      <div class="tech-chips">
+        <span class="chip">RP2040</span>
+        <span class="chip">MicroPython</span>
+        <span class="chip">FastAPI</span>
+        <span class="chip">Ngrok</span>
+        <span class="chip">Chart.js</span>
+        <span class="chip">Thermistor</span>
+        <span class="chip">LDR Sensor</span>
+        <span class="chip">Vibration MEMS</span>
+        <span class="chip">DHT Humidity</span>
+        <span class="chip">DRL + RF + GBM</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════
+     SECTION 7: CLOSING — FROM INSIGHT TO ACTION
+═════════════════════════════════════════════ -->
+<section class="cta" id="cta">
+  <div class="cta-box reveal">
+    <div class="cta-glow-a"></div>
+    <div class="cta-glow-b"></div>
+    <div class="cta-badge"><span style="width:5px;height:5px;border-radius:50%;background:var(--neural);display:inline-block;animation:blink 1.4s infinite;"></span> REFLEXSENSE SYSTEM ACTIVE</div>
+    <h2>From insight<br>to <em>action.</em></h2>
+    <p class="cta-quote">"Our team now sees technology as a partner in decision-making, not just a tool."</p>
+    <p class="cta-quote-attr">— Operations Director, ReflexSense Client</p>
+    <p class="cta-final-line">Your equipment is already sending signals.<br><em>Are you listening?</em></p>
+    <div class="cta-btns">
+      <a href="contact.html" class="btn-hero-fill">Get In Touch</a>
+      <a href="login.html" class="btn-hero-outline">Login</a>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="foot-brand">
+    <div class="foot-logo-mark">
+      <svg viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="3"/>
+        <line x1="12" y1="9" x2="12" y2="3"/><line x1="14.6" y1="9.7" x2="19" y2="6"/>
+        <line x1="14.6" y1="14.3" x2="19" y2="18"/><line x1="12" y1="15" x2="12" y2="21"/>
+        <line x1="9.4" y1="14.3" x2="5" y2="18"/><line x1="9.4" y1="9.7" x2="5" y2="6"/>
+      </svg>
+    </div>
+    <span class="foot-logotype">REFLEXSENSE</span>
+  </div>
+  <div class="foot-links">
+    <a href="#">Documentation</a>
+    <a href="dashboard.html">Dashboard</a>
+    <a href="#features">Capabilities</a>
+    <a href="#usecases">Industries</a>
+    <a href="#adaptive">Technology</a>
+  </div>
+  <span class="foot-copy">© 2025 ReflexSense · The Nervous System Pvt. Ltd</span>
+</footer>
+
+
+<script>
+
+
+
+/* ── CURSOR ── */
+const dot  = document.getElementById('cursorDot');
+const ring = document.getElementById('cursorRing');
+let mx=0,my=0,rx=0,ry=0;
+document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;dot.style.left=mx+'px';dot.style.top=my+'px';});
+function animRing(){rx+=(mx-rx)*.1;ry+=(my-ry)*.1;ring.style.left=rx+'px';ring.style.top=ry+'px';requestAnimationFrame(animRing);}
+animRing();
+document.querySelectorAll('a,button,.chip,.uc-card,.feat-card,.pillar,.stat,.persona-card,.dash-feat,.adv-pillar,.vs-card').forEach(el=>{
+  el.addEventListener('mouseenter',()=>{ring.querySelector('.cursor-ring').style.width='60px';ring.querySelector('.cursor-ring').style.height='60px';ring.querySelector('.cursor-ring').style.borderColor='rgba(0,212,232,.6)';});
+  el.addEventListener('mouseleave',()=>{ring.querySelector('.cursor-ring').style.width='36px';ring.querySelector('.cursor-ring').style.height='36px';ring.querySelector('.cursor-ring').style.borderColor='rgba(0,212,232,.4)';});
+});
+
+/* ── NEURAL CANVAS ── */
+const canvas = document.getElementById('neuralCanvas');
+const ctx = canvas.getContext('2d');
+let W,H,nodes=[];
+function resize(){W=canvas.width=window.innerWidth;H=canvas.height=window.innerHeight;}
+resize();window.addEventListener('resize',resize);
+function makeNodes(n){nodes=[];for(let i=0;i<n;i++) nodes.push({x:Math.random()*W,y:Math.random()*H,vx:(Math.random()-.5)*.25,vy:(Math.random()-.5)*.25,r:Math.random()*2+1,pulse:Math.random()*Math.PI*2});}
+makeNodes(55);
+function drawNeural(){
+  ctx.clearRect(0,0,W,H);
+  const t=Date.now()/1000;
+  for(let i=0;i<nodes.length;i++){
+    for(let j=i+1;j<nodes.length;j++){
+      const dx=nodes[j].x-nodes[i].x,dy=nodes[j].y-nodes[i].y;
+      const dist=Math.sqrt(dx*dx+dy*dy);
+      if(dist<160){
+        const alpha=(1-dist/160)*.18;
+        ctx.beginPath();ctx.moveTo(nodes[i].x,nodes[i].y);ctx.lineTo(nodes[j].x,nodes[j].y);
+        const isPulse=dist<100&&Math.sin(t*2+i)>.7;
+        ctx.strokeStyle=isPulse?`rgba(108,159,255,${alpha*1.5})`:`rgba(0,212,232,${alpha})`;
+        ctx.lineWidth=isPulse?1:.5;ctx.stroke();
+      }
+    }
+  }
+  for(let n of nodes){
+    n.x+=n.vx;n.y+=n.vy;
+    if(n.x<0||n.x>W)n.vx*=-1;
+    if(n.y<0||n.y>H)n.vy*=-1;
+    n.pulse+=.02;
+    const glow=Math.sin(n.pulse)*.5+.5;
+    ctx.beginPath();ctx.arc(n.x,n.y,n.r*(1+glow*.4),0,Math.PI*2);
+    ctx.fillStyle=`rgba(0,212,232,${.3+glow*.4})`;ctx.fill();
+  }
+  requestAnimationFrame(drawNeural);
+}
+drawNeural();
+
+/* ── MOBILE NAV ── */
+const mobBtn=document.getElementById('mobBtn');
+const navLinks=document.getElementById('navLinks');
+mobBtn.addEventListener('click',()=>{
+  const open=navLinks.classList.toggle('open');
+  mobBtn.querySelector('svg').innerHTML=open
+    ?'<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>'
+    :'<line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>';
+});
+navLinks.querySelectorAll('a').forEach(a=>a.addEventListener('click',()=>navLinks.classList.remove('open')));
+
+/* ── SCROLL REVEAL ── */
+const ro=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');ro.unobserve(e.target);}});},{threshold:.1});
+document.querySelectorAll('.reveal').forEach(el=>ro.observe(el));
+
+/* ── TICKER ── */
+let phase=0;
+function genTicks(){
+  phase+=.05;
+  return [
+    {k:'NERVE-A TEMP', v:(62+10*Math.sin(phase*.7)+(Math.random()-.5)*3).toFixed(1),u:'°C',s:62+10*Math.sin(phase*.7)>75?'crit':'ok'},
+    {k:'NERVE-A VIB',  v:(35+18*Math.sin(phase*1.3)+(Math.random()-.5)*5).toFixed(1),u:'mm/s',s:35+18*Math.sin(phase*1.3)>60?'warn':'ok'},
+    {k:'SYNAPSE LDR',  v:Math.round(450+280*Math.sin(phase*.4)+(Math.random()-.5)*40),u:'lux',s:'ok'},
+    {k:'NERVE-A HUM',  v:(55+12*Math.sin(phase*.35)+(Math.random()-.5)*3).toFixed(1),u:'%RH',s:'ok'},
+    {k:'NERVE-B TEMP', v:(58+8*Math.sin(phase*.9)+(Math.random()-.5)*2).toFixed(1),u:'°C',s:'ok'},
+    {k:'NERVE-B VIB',  v:(68+22*Math.sin(phase*.6)+(Math.random()-.5)*6).toFixed(1),u:'mm/s',s:'warn'},
+    {k:'AMBIENT',      v:(28+3*Math.sin(phase*.25)).toFixed(1),u:'°C',s:'ok'},
+    {k:'AXON-C TEMP',  v:(45+5*Math.cos(phase*.5)).toFixed(1),u:'°C',s:'ok'},
+  ];
+}
+function buildTicker(){
+  const ticks=genTicks();
+  const html=[...ticks,...ticks].map(t=>`<span class="tick"><span class="tick-key">${t.k}</span><span class="tick-val ${t.s}">${t.v}<span style="font-size:9px;opacity:.55;margin-left:2px">${t.u}</span></span></span>`).join('');
+  document.getElementById('tickerTrack').innerHTML=html;
+}
+buildTicker();setInterval(buildTicker,4000);
+
+/* ── CLOCK ── */
+function updateClocks(){
+  const t=new Date().toLocaleTimeString();
+  ['tickTime','miniTime','miniTime2'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=t;});
+}
+updateClocks();setInterval(updateClocks,1000);
+
+/* ── MINI DASHBOARD (both instances) ── */
+let mp=0;
+function updateMini(){
+  mp+=.07;
+  const temp=(62+10*Math.sin(mp*.7)+(Math.random()-.5)*3).toFixed(1);
+  const vib =(35+18*Math.sin(mp*1.3)+(Math.random()-.5)*5).toFixed(1);
+  const ldr =Math.round(450+280*Math.sin(mp*.4));
+  const hum =(55+12*Math.sin(mp*.35)+(Math.random()-.5)*2).toFixed(1);
+  const hA=Math.max(3,Math.min(100,Math.round(72+18*(1-(temp-50)/60))));
+  const hB=Math.max(3,Math.min(100,Math.round(45+28*(1-vib/110))));
+  const hD=Math.max(3,Math.min(100,Math.round(18+20*(1-vib/110))));
+  ['','2'].forEach(s=>{
+    const e=id=>document.getElementById(id+s);
+    if(e('mTemp')){
+      e('mTemp').textContent=temp;e('mVib').textContent=vib;e('mLdr').textContent=ldr;e('mHum').textContent=hum;
+      e('mBarA').textContent=hA+'%';e('mFillA').style.width=hA+'%';
+      e('mBarB').textContent=hB+'%';e('mFillB').style.width=hB+'%';
+      const bCol=hB>68?'var(--neural)':hB>40?'var(--amber)':'var(--red)';
+      e('mFillB').style.background=bCol;
+      e('mBarD').textContent=hD+'%';e('mFillD').style.width=hD+'%';
+    }
+  });
+}
+updateMini();setInterval(updateMini,2000);
+
+/* ── AI MODEL BARS (animate on scroll) ── */
+const modelData={drl:87,rf:82,gbm:84,ens:93};
+let barsAnimated=false;
+const barObserver=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting&&!barsAnimated){
+      barsAnimated=true;
+      setTimeout(()=>{
+        Object.entries(modelData).forEach(([key,val])=>{
+          const bar=document.getElementById(key+'Bar');
+          const pct=document.getElementById(key+'Pct');
+          if(bar){bar.style.width=val+'%';}
+          if(pct){pct.textContent=val+'%';}
+        });
+      },300);
+    }
+  });
+},{threshold:.3});
+const barEl=document.getElementById('drlBar');
+if(barEl)barObserver.observe(barEl.closest('.ai-diagram'));
+</script>
+
+
+</body>
+</html>
