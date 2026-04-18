@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ReflexSense — Get in Touch</title>
+<link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+
+:root{
+  --void:    #020610;
+  --deep:    #050d1e;
+  --bg:      #081229;
+  --bg2:     #0a1630;
+  --card:    #0c1a38;
+  --border:  #132240;
+  --border2: #1e3560;
+  --neural:  #00d4e8;
+  --neural2: #00b0c4;
+  --neural3: #00f0ff;
+  --pulse:   #6c9fff;
+  --pulse2:  #4a7de8;
+  --signal:  #ff6b35;
+  --amber:   #f5a623;
+  --red:     #ff4d6a;
+  --green:   #2dd4aa;
+  --nwhite:  #e8f4ff;
+  --lgrey:   #9bb8d4;
+  --t1:      #edf5ff;
+  --t2:      #7aa0c0;
+  --t3:      #2e4a6a;
+  --fd: 'Open Sans', sans-serif;
+  --fb: 'Open Sans', sans-serif;
+  --fm: 'Open Sans', sans-serif;
+}
+
+body{background:var(--void);color:var(--t1);font-family:var(--fb);overflow-x:hidden;cursor:none;}
+
+/* ── CUSTOM CURSOR ── */
+.cursor{position:fixed;pointer-events:none;z-index:9999;mix-blend-mode:screen;}
+.cursor-dot{width:8px;height:8px;border-radius:50%;background:var(--neural);transform:translate(-50%,-50%);}
+.cursor-ring{width:36px;height:36px;border-radius:50%;border:1px solid rgba(0,212,232,.4);transform:translate(-50%,-50%);transition:width .2s, height .2s;}
+
+/* ── NEURAL CANVAS ── */
+#neuralCanvas{position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.35;}
+
+/* ── NAV ── */
+nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;height:68px;padding:0 48px;background:rgba(2,6,16,.85);border-bottom:1px solid var(--border);backdrop-filter:blur(20px);}
+.nav-brand{display:flex;align-items:center;gap:12px;text-decoration:none;}
+.nav-logo-mark{width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg, var(--neural), var(--pulse));display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;flex-shrink:0;}
+.nav-logo-mark::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 30% 30%, rgba(255,255,255,.2), transparent 60%);}
+.nav-logo-mark svg{width:20px;height:20px;fill:none;stroke:rgba(2,6,16,.9);stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+.nav-logotype{font-family:var(--fd);font-size:20px;font-weight:800;letter-spacing:1px;color:var(--t1);}
+.nav-logotype span{color:var(--neural);}
+.nav-back{font-family:var(--fb);font-size:13px;font-weight:500;padding:8px 20px;border-radius:8px;border:1px solid var(--border2);background:transparent;color:var(--t2);cursor:none;text-decoration:none;transition:all .2s;}
+.nav-back:hover{border-color:var(--neural);color:var(--neural);}
+.nav-login{font-family:var(--fb);font-size:13px;font-weight:600;padding:9px 22px;border-radius:8px;border:none;background:linear-gradient(135deg, var(--neural), var(--pulse));color:var(--void);cursor:none;text-decoration:none;transition:all .25s;}
+
+/* ── HERO ── */
+.contact-hero{
+  position:relative;padding:160px 48px 80px;
+  text-align:center;overflow:hidden;
+}
+.hero-glow{position:absolute;top:-80px;left:50%;transform:translateX(-50%);width:800px;height:500px;border-radius:50%;background:radial-gradient(ellipse, rgba(0,212,232,.07) 0%, transparent 70%);pointer-events:none;}
+.hero-badge{display:inline-flex;align-items:center;gap:8px;padding:6px 16px 6px 8px;border-radius:100px;background:rgba(0,212,232,.06);border:1px solid rgba(0,212,232,.25);font-family:var(--fm);font-size:9.5px;color:var(--neural);letter-spacing:2px;margin-bottom:28px;animation:fadeUp .7s ease both;}
+.hero-badge .pulse-dot{width:18px;height:18px;border-radius:50%;background:rgba(0,212,232,.15);display:flex;align-items:center;justify-content:center;}
+.hero-badge .pulse-dot::after{content:'';width:6px;height:6px;border-radius:50%;background:var(--neural);animation:blink 1.4s infinite;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+.contact-hero h1{font-family:var(--fd);font-size:clamp(40px,7vw,88px);font-weight:800;line-height:.95;letter-spacing:-2.5px;color:var(--t1);margin-bottom:20px;animation:fadeUp .8s .08s ease both;}
+.contact-hero h1 em{font-style:normal;background:linear-gradient(90deg,var(--neural3),var(--neural),var(--pulse));background-size:200% auto;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:shimmer 5s linear 1s infinite;}
+@keyframes shimmer{from{background-position:200% center}to{background-position:-200% center}}
+.contact-hero p{max-width:520px;margin:0 auto;font-size:16px;color:var(--t2);line-height:1.75;animation:fadeUp .8s .16s ease both;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── CONTACT WAYS ── */
+.contact-ways{
+  display:grid;grid-template-columns:repeat(3,1fr);
+  gap:1px;background:var(--border);
+  border-top:1px solid var(--border);border-bottom:1px solid var(--border);
+}
+.cway{
+  background:var(--card);padding:36px 32px;
+  display:flex;flex-direction:column;gap:14px;
+  position:relative;overflow:hidden;transition:background .3s;
+}
+.cway:hover{background:var(--bg2);}
+.cway::after{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--neural),transparent);opacity:0;transition:opacity .4s;}
+.cway:hover::after{opacity:1;}
+.cway-icon{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;}
+.cway-icon svg{width:22px;height:22px;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;}
+.ci-a{background:rgba(0,212,232,.1);} .ci-a svg{stroke:var(--neural);}
+.ci-b{background:rgba(108,159,255,.1);} .ci-b svg{stroke:var(--pulse);}
+.ci-c{background:rgba(45,212,170,.1);} .ci-c svg{stroke:var(--green);}
+.cway-label{font-family:var(--fm);font-size:9px;letter-spacing:2px;color:var(--t3);}
+.cway-h{font-family:var(--fd);font-size:20px;font-weight:700;color:var(--t1);}
+.cway-val{font-size:14px;color:var(--neural);text-decoration:none;transition:opacity .2s;}
+.cway-val:hover{opacity:.7;}
+.cway-note{font-size:12px;color:var(--t2);line-height:1.5;}
+.cway-resp{font-family:var(--fm);font-size:9.5px;color:var(--t3);margin-top:auto;padding-top:8px;border-top:1px solid var(--border);}
+.resp-dot{display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--neural);margin-right:6px;animation:blink 1.4s infinite;}
+
+/* ── MAIN CONTENT ── */
+.contact-main{
+  display:grid;grid-template-columns:1fr 1.1fr;
+  gap:0;
+  border-top:1px solid var(--border);
+}
+
+/* ── FORM SIDE ── */
+.form-side{padding:80px 64px;border-right:1px solid var(--border);position:relative;z-index:1;}
+.side-eyebrow{font-family:var(--fm);font-size:10px;letter-spacing:2.5px;color:var(--neural);margin-bottom:16px;}
+.side-h{font-family:var(--fd);font-size:clamp(28px,3vw,40px);font-weight:800;letter-spacing:-1px;color:var(--t1);margin-bottom:10px;}
+.side-h em{font-style:normal;color:var(--neural);}
+.side-p{font-size:14px;color:var(--t2);line-height:1.7;margin-bottom:40px;max-width:400px;}
+
+/* FORM */
+.contact-form{display:flex;flex-direction:column;gap:18px;}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.field{display:flex;flex-direction:column;gap:7px;}
+.field label{font-family:var(--fm);font-size:9.5px;letter-spacing:1.5px;color:var(--t2);}
+.input-wrap{position:relative;display:flex;align-items:center;}
+.iw-icon{position:absolute;left:14px;z-index:2;pointer-events:none;}
+.iw-icon svg{width:15px;height:15px;fill:none;stroke:var(--t3);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;transition:stroke .25s;display:block;}
+.input-wrap:focus-within .iw-icon svg{stroke:var(--neural);}
+input,select,textarea{
+  width:100%;padding:13px 13px 13px 42px;
+  background:var(--card);border:1px solid var(--border);border-radius:10px;
+  font-family:var(--fb);font-size:13.5px;color:var(--t1);
+  outline:none;transition:border-color .25s, box-shadow .25s, background .25s;
+  cursor:none;
+}
+input::placeholder,textarea::placeholder{color:var(--t3);}
+input:focus,select:focus,textarea:focus{border-color:var(--neural);box-shadow:0 0 0 3px rgba(0,212,232,.1);background:var(--bg2);}
+select{appearance:none;-webkit-appearance:none;padding-left:42px;color:var(--t2);}
+select option{background:var(--card);color:var(--t1);}
+textarea{padding:13px 16px;min-height:130px;resize:vertical;font-family:var(--fb);line-height:1.6;}
+.no-icon textarea,.no-icon input{padding-left:16px;}
+
+/* interest tags */
+.interest-label{font-family:var(--fm);font-size:9.5px;letter-spacing:1.5px;color:var(--t2);margin-bottom:0;}
+.interest-tags{display:flex;flex-wrap:wrap;gap:8px;}
+.itag{
+  font-family:var(--fm);font-size:10px;letter-spacing:.5px;
+  padding:7px 14px;border-radius:6px;
+  background:var(--card);border:1px solid var(--border);color:var(--t2);
+  cursor:none;transition:all .2s;user-select:none;
+}
+.itag:hover{border-color:var(--border2);color:var(--t1);}
+.itag.selected{border-color:var(--neural);color:var(--neural);background:rgba(0,212,232,.07);}
+
+.btn-submit{
+  width:100%;padding:16px;border-radius:10px;border:none;
+  background:linear-gradient(135deg, var(--neural) 0%, var(--pulse) 100%);
+  font-family:var(--fb);font-size:15px;font-weight:600;color:var(--void);
+  cursor:none;transition:all .3s;position:relative;overflow:hidden;
+  box-shadow:0 0 32px rgba(0,212,232,.2);
+}
+.btn-submit::before{content:'';position:absolute;inset:0;background:rgba(255,255,255,.18);opacity:0;transition:opacity .25s;}
+.btn-submit:hover::before{opacity:1;}
+.btn-submit:hover{transform:translateY(-2px);box-shadow:0 8px 40px rgba(0,212,232,.3);}
+
+.privacy-note{font-family:var(--fm);font-size:9.5px;color:var(--t3);line-height:1.6;text-align:center;}
+.privacy-note a{color:var(--neural);text-decoration:none;}
+
+/* SUCCESS STATE */
+.success-state{display:none;text-align:center;padding:48px 0;}
+.success-icon{width:72px;height:72px;border-radius:50%;background:rgba(0,212,232,.1);border:2px solid rgba(0,212,232,.3);display:flex;align-items:center;justify-content:center;margin:0 auto 24px;}
+.success-icon svg{width:32px;height:32px;fill:none;stroke:var(--neural);stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+.success-title{font-family:var(--fd);font-size:28px;font-weight:800;color:var(--t1);margin-bottom:12px;letter-spacing:-1px;}
+.success-desc{font-size:14px;color:var(--t2);line-height:1.7;max-width:360px;margin:0 auto;}
+
+/* ── INFO SIDE ── */
+.info-side{padding:80px 64px;background:var(--deep);}
+.info-block{margin-bottom:52px;}
+.info-block:last-child{margin-bottom:0;}
+.info-eyebrow{font-family:var(--fm);font-size:9.5px;letter-spacing:2.5px;color:var(--neural);margin-bottom:18px;}
+.info-h{font-family:var(--fd);font-size:22px;font-weight:700;color:var(--t1);margin-bottom:14px;letter-spacing:-.5px;}
+
+/* Office */
+.offices{display:flex;flex-direction:column;gap:14px;}
+.office{padding:18px 20px;background:var(--card);border:1px solid var(--border);border-radius:10px;transition:border-color .3s;}
+.office:hover{border-color:var(--border2);}
+.office-name{font-family:var(--fd);font-size:15px;font-weight:700;color:var(--t1);margin-bottom:4px;}
+.office-addr{font-size:12.5px;color:var(--t2);line-height:1.6;}
+.office-tag{display:inline-block;font-family:var(--fm);font-size:8.5px;letter-spacing:1px;padding:2px 8px;border-radius:3px;border:1px solid rgba(0,212,232,.2);color:var(--neural);margin-top:6px;}
+
+/* FAQ */
+.faq-list{display:flex;flex-direction:column;gap:0;border:1px solid var(--border);border-radius:12px;overflow:hidden;}
+.faq-item{border-bottom:1px solid var(--border);}
+.faq-item:last-child{border-bottom:none;}
+.faq-q{
+  width:100%;background:none;border:none;color:var(--t1);cursor:none;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:18px 20px;font-family:var(--fb);font-size:13.5px;font-weight:500;
+  text-align:left;transition:background .2s;
+}
+.faq-q:hover{background:rgba(0,212,232,.03);}
+.faq-q svg{width:16px;height:16px;flex-shrink:0;fill:none;stroke:var(--t3);stroke-width:2;stroke-linecap:round;transition:transform .3s,stroke .2s;}
+.faq-item.open .faq-q svg{transform:rotate(45deg);stroke:var(--neural);}
+.faq-a{max-height:0;overflow:hidden;transition:max-height .4s ease;font-size:13px;color:var(--t2);line-height:1.65;padding:0 20px;}
+.faq-item.open .faq-a{max-height:200px;padding:0 20px 18px;}
+
+/* Status */
+.status-board{display:flex;flex-direction:column;gap:8px;}
+.status-row{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:var(--card);border:1px solid var(--border);border-radius:8px;}
+.status-name{font-family:var(--fm);font-size:10px;color:var(--t2);letter-spacing:.5px;}
+.status-pill{font-family:var(--fm);font-size:9px;letter-spacing:1px;padding:3px 10px;border-radius:100px;display:flex;align-items:center;gap:5px;}
+.sp-green{background:rgba(45,212,170,.1);color:var(--green);border:1px solid rgba(45,212,170,.2);}
+.sp-amber{background:rgba(245,166,35,.1);color:var(--amber);border:1px solid rgba(245,166,35,.2);}
+.sp-dot{width:5px;height:5px;border-radius:50%;background:currentColor;animation:blink 1.4s infinite;}
+
+/* ── FOOTER ── */
+footer{border-top:1px solid var(--border);padding:36px 48px;background:var(--void);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;position:relative;z-index:1;}
+.foot-brand{display:flex;align-items:center;gap:10px;}
+.foot-logo-mark{width:26px;height:26px;border-radius:6px;background:linear-gradient(135deg,var(--neural),var(--pulse));display:flex;align-items:center;justify-content:center;}
+.foot-logo-mark svg{width:13px;height:13px;fill:none;stroke:var(--void);stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;}
+.foot-logotype{font-family:var(--fd);font-size:14px;font-weight:800;letter-spacing:1.5px;color:var(--t2);}
+.foot-links{display:flex;gap:24px;}
+.foot-links a{font-size:12px;color:var(--t3);text-decoration:none;transition:color .2s;}
+.foot-links a:hover{color:var(--neural);}
+.foot-copy{font-family:var(--fm);font-size:10px;color:var(--t3);}
+
+/* ── REVEAL ── */
+.reveal{opacity:0;transform:translateY(24px);transition:opacity .6s ease,transform .6s ease;}
+.reveal.in{opacity:1;transform:translateY(0);}
+.reveal-d1{transition-delay:.08s;}.reveal-d2{transition-delay:.16s;}.reveal-d3{transition-delay:.24s;}
+
+/* ── RESPONSIVE ── */
+@media(max-width:1024px){
+  .contact-main{grid-template-columns:1fr;}
+  .form-side{border-right:none;border-bottom:1px solid var(--border);padding:60px 40px;}
+  .info-side{padding:60px 40px;}
+  .contact-ways{grid-template-columns:1fr;}
+}
+@media(max-width:768px){
+  nav{padding:0 20px;}
+  .contact-hero{padding:120px 20px 60px;}
+  .form-side,.info-side{padding:48px 20px;}
+  .form-row{grid-template-columns:1fr;}
+  footer{flex-direction:column;align-items:flex-start;padding:24px 20px;}
+  .foot-links{flex-wrap:wrap;gap:16px;}
+  body{cursor:auto;}.cursor{display:none;}
+}
+</style>
+</head>
+<body>
+
+<div class="cursor" id="cursorDot"><div class="cursor-dot"></div></div>
+<div class="cursor" id="cursorRing"><div class="cursor-ring"></div></div>
+<canvas id="neuralCanvas"></canvas>
+
+<!-- NAV -->
+<nav>
+  <a class="nav-brand" href="reflexsense.html">
+    <div class="nav-logo-mark">
+      <svg viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="3"/>
+        <line x1="12" y1="9" x2="12" y2="3"/>
+        <line x1="14.6" y1="9.7" x2="19" y2="6"/>
+        <line x1="14.6" y1="14.3" x2="19" y2="18"/>
+        <line x1="12" y1="15" x2="12" y2="21"/>
+        <line x1="9.4" y1="14.3" x2="5" y2="18"/>
+        <line x1="9.4" y1="9.7" x2="5" y2="6"/>
+      </svg>
+    </div>
+    <span class="nav-logotype">Reflex<span>Sense</span></span>
+  </a>
+  <div style="display:flex;gap:10px;align-items:center;">
+    <a href="reflexsense.html" class="nav-back">← Back to Home</a>
+    <a href="login.html" class="nav-login">Login</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="contact-hero">
+  <div class="hero-glow"></div>
+  <div class="hero-badge">
+    <div class="pulse-dot"></div>
+    NEURAL SUPPORT NETWORK ONLINE
+  </div>
+  <h1>Let's <em>connect</em><br>your operation.</h1>
+  <p>Whether you're ready to deploy, evaluating options, or just curious how ReflexSense works — our team speaks your language: downtime, OEE, MTBF, and ROI.</p>
+</section>
+
+<!-- CONTACT WAYS -->
+<div class="contact-ways">
+  <div class="cway reveal">
+    <div class="cway-icon ci-a">
+      <svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.41 2 2 0 0 1 3.6 1.22h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.91 8.81A16 16 0 0 0 16 16.91l.86-.86a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+    </div>
+    <div class="cway-label">DIRECT LINE</div>
+    <div class="cway-h">Talk to Sales</div>
+    <a class="cway-val" href="tel:+18001234567">+1 800 123 4567</a>
+    <p class="cway-note">Talk to a solutions engineer who understands your industry — not a script-reader.</p>
+    <div class="cway-resp"><span class="resp-dot"></span>Available Mon–Fri, 08:00–18:00 UTC</div>
+  </div>
+  <div class="cway reveal reveal-d1">
+    <div class="cway-icon ci-b">
+      <svg viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+    </div>
+    <div class="cway-label">EMAIL</div>
+    <div class="cway-h">Send a Message</div>
+    <a class="cway-val" href="mailto:hello@reflexsense.io">hello@reflexsense.io</a>
+    <p class="cway-note">For demos, pricing, partnership enquiries, or technical questions. We read every email.</p>
+    <div class="cway-resp"><span class="resp-dot"></span>Typical response: &lt; 4 hours</div>
+  </div>
+  <div class="cway reveal reveal-d2">
+    <div class="cway-icon ci-c">
+      <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+    </div>
+    <div class="cway-label">LIVE CHAT</div>
+    <div class="cway-h">Chat with Support</div>
+    <a class="cway-val" href="#">Open Chat Window →</a>
+    <p class="cway-note">Already a customer? Live chat connects you directly to our support engineering team.</p>
+    <div class="cway-resp"><span class="resp-dot"></span>Average wait: &lt; 2 minutes</div>
+  </div>
+</div>
+
+<!-- MAIN CONTENT -->
+<div class="contact-main">
+
+  <!-- FORM SIDE -->
+  <div class="form-side">
+    <p class="side-eyebrow">SEND A MESSAGE</p>
+    <h2 class="side-h">Tell us what<br>you <em>need.</em></h2>
+    <p class="side-p">We'll match you with the right team — whether that's a demo, a pricing call, a technical deep-dive, or a pilot proposal for your facility.</p>
+
+    <div id="contactFormWrap">
+      <form class="contact-form" id="contactForm" onsubmit="handleSubmit(event)">
+
+        <div class="form-row">
+          <div class="field">
+            <label for="fname">FIRST NAME</label>
+            <div class="input-wrap">
+              <div class="iw-icon"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+              <input type="text" id="fname" placeholder="Maria" required>
+            </div>
+          </div>
+          <div class="field">
+            <label for="lname">LAST NAME</label>
+            <div class="input-wrap">
+              <div class="iw-icon"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+              <input type="text" id="lname" placeholder="Santos" required>
+            </div>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="cemail">WORK EMAIL</label>
+          <div class="input-wrap">
+            <div class="iw-icon"><svg viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></div>
+            <input type="email" id="cemail" placeholder="maria@plantops.com" required>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="field">
+            <label for="company">COMPANY</label>
+            <div class="input-wrap">
+              <div class="iw-icon"><svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg></div>
+              <input type="text" id="company" placeholder="Acme Industries" required>
+            </div>
+          </div>
+          <div class="field">
+            <label for="role">YOUR ROLE</label>
+            <div class="input-wrap">
+              <div class="iw-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg></div>
+              <select id="role">
+                <option value="">Select role…</option>
+                <option>Plant Manager</option>
+                <option>Reliability Engineer</option>
+                <option>Maintenance Engineer</option>
+                <option>Operations Director</option>
+                <option>CTO / Head of Engineering</option>
+                <option>Procurement</option>
+                <option>Other</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="industry">INDUSTRY</label>
+          <div class="input-wrap">
+            <div class="iw-icon"><svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>
+            <select id="industry">
+              <option value="">Select industry…</option>
+              <option>Manufacturing</option>
+              <option>Agriculture</option>
+              <option>Transportation / Railways</option>
+              <option>Healthcare & Facilities</option>
+              <option>Energy & Utilities</option>
+              <option>Mining</option>
+              <option>Other</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field" style="gap:10px;">
+          <label class="interest-label">I'M INTERESTED IN</label>
+          <div class="interest-tags" id="interestTags">
+            <span class="itag" data-val="demo">Product Demo</span>
+            <span class="itag" data-val="pricing">Pricing & ROI</span>
+            <span class="itag" data-val="pilot">Site Pilot</span>
+            <span class="itag" data-val="tech">Technical Deep-Dive</span>
+            <span class="itag" data-val="partner">Partnership</span>
+            <span class="itag" data-val="support">Customer Support</span>
+          </div>
+        </div>
+
+        <div class="field no-icon">
+          <label for="message">MESSAGE</label>
+          <textarea id="message" placeholder="Tell us about your operation — number of machines, current challenges, or what you'd like to achieve with ReflexSense..." required></textarea>
+        </div>
+
+        <button type="submit" class="btn-submit" id="submitBtn">Send Message →</button>
+
+        <p class="privacy-note">By submitting, you agree to our <a href="#">Privacy Policy</a>. We never share your data with third parties.</p>
+      </form>
+    </div>
+
+    <div class="success-state" id="successState">
+      <div class="success-icon">
+        <svg viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+      </div>
+      <div class="success-title">Signal received.</div>
+      <p class="success-desc">Thanks for reaching out. A ReflexSense solutions engineer will respond within 4 hours — usually much sooner.</p>
+    </div>
+  </div>
+
+  <!-- INFO SIDE -->
+  <div class="info-side">
+
+    <div class="info-block reveal">
+      <div class="info-eyebrow">SYSTEM STATUS</div>
+      <div class="info-h">All systems operational.</div>
+      <div class="status-board">
+        <div class="status-row">
+          <span class="status-name">NEURAL API</span>
+          <span class="status-pill sp-green"><span class="sp-dot"></span>Operational</span>
+        </div>
+        <div class="status-row">
+          <span class="status-name">DASHBOARD CLOUD</span>
+          <span class="status-pill sp-green"><span class="sp-dot"></span>Operational</span>
+        </div>
+        <div class="status-row">
+          <span class="status-name">NGROK TUNNEL</span>
+          <span class="status-pill sp-green"><span class="sp-dot"></span>Operational</span>
+        </div>
+        <div class="status-row">
+          <span class="status-name">ALERTING ENGINE</span>
+          <span class="status-pill sp-green"><span class="sp-dot"></span>Operational</span>
+        </div>
+        <div class="status-row">
+          <span class="status-name">DATA INGESTION</span>
+          <span class="status-pill sp-amber"><span class="sp-dot"></span>Degraded — Investigating</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="info-block reveal reveal-d1">
+      <div class="info-eyebrow">GLOBAL OFFICES</div>
+      <div class="info-h">We're where you are.</div>
+      <div class="offices">
+        <div class="office">
+          <div class="office-name">Singapore HQ</div>
+          <div class="office-addr">18 Science Park Road,<br>Singapore Science Park II, 117666</div>
+          <span class="office-tag">ASIA-PACIFIC HQ</span>
+        </div>
+        <div class="office">
+          <div class="office-name">Frankfurt</div>
+          <div class="office-addr">Bockenheimer Landstraße 17–19,<br>60325 Frankfurt am Main, Germany</div>
+          <span class="office-tag">EMEA HQ</span>
+        </div>
+        <div class="office">
+          <div class="office-name">Houston</div>
+          <div class="office-addr">1700 West Loop South, Suite 1900,<br>Houston, TX 77027, USA</div>
+          <span class="office-tag">AMERICAS HQ</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="info-block reveal reveal-d2">
+      <div class="info-eyebrow">FREQUENTLY ASKED</div>
+      <div class="info-h">Quick answers.</div>
+      <div class="faq-list">
+        <div class="faq-item">
+          <button class="faq-q" onclick="toggleFaq(this)">
+            How long does deployment take?
+            <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          </button>
+          <div class="faq-a">Most customers have sensors live and streaming within 48–72 hours. Our plug-and-play RP2040 nodes require no infrastructure changes, and the ngrok tunnel is configured in under 10 minutes.</div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-q" onclick="toggleFaq(this)">
+            Do we need to replace existing equipment?
+            <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          </button>
+          <div class="faq-a">No rip-and-replace required. ReflexSense attaches non-invasively to existing machines and integrates with SAP, Oracle NetSuite, Power BI, and most CMMS platforms via REST API.</div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-q" onclick="toggleFaq(this)">
+            How is pricing structured?
+            <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          </button>
+          <div class="faq-a">Pricing is per monitored asset, billed annually. We offer a Starter tier (up to 10 nodes), Professional (up to 100 nodes), and Enterprise (unlimited + custom SLA). Use the calculator on our homepage for an instant estimate.</div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-q" onclick="toggleFaq(this)">
+            Is our machine data secure?
+            <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          </button>
+          <div class="faq-a">All data travels encrypted through our ngrok secure tunnel infrastructure. We are SOC 2 Type II compliant, and optionally offer on-premise deployment for air-gapped environments.</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="foot-brand">
+    <div class="foot-logo-mark">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><line x1="12" y1="9" x2="12" y2="3"/><line x1="14.6" y1="9.7" x2="19" y2="6"/><line x1="14.6" y1="14.3" x2="19" y2="18"/><line x1="12" y1="15" x2="12" y2="21"/><line x1="9.4" y1="14.3" x2="5" y2="18"/><line x1="9.4" y1="9.7" x2="5" y2="6"/></svg>
+    </div>
+    <span class="foot-logotype">REFLEXSENSE</span>
+  </div>
+  <div class="foot-links">
+    <a href="reflexsense.html">Home</a>
+    <a href="login.html">Login</a>
+    <a href="dashboard.html">Dashboard</a>
+    <a href="#">Documentation</a>
+    <a href="#">Privacy Policy</a>
+  </div>
+  <span class="foot-copy">© 2025 ReflexSense · The Nervous System of Industry</span>
+</footer>
+
+<script>
+/* ── CURSOR ── */
+const dot=document.getElementById('cursorDot'),ring=document.getElementById('cursorRing');
+let mx=0,my=0,rx=0,ry=0;
+document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;dot.style.left=mx+'px';dot.style.top=my+'px';});
+function animRing(){rx+=(mx-rx)*.1;ry+=(my-ry)*.1;ring.style.left=rx+'px';ring.style.top=ry+'px';requestAnimationFrame(animRing);}animRing();
+document.querySelectorAll('a,button,input,select,textarea,.itag,.cway,.office').forEach(el=>{
+  el.addEventListener('mouseenter',()=>{ring.querySelector('.cursor-ring').style.width='56px';ring.querySelector('.cursor-ring').style.height='56px';ring.querySelector('.cursor-ring').style.borderColor='rgba(0,212,232,.6)';});
+  el.addEventListener('mouseleave',()=>{ring.querySelector('.cursor-ring').style.width='36px';ring.querySelector('.cursor-ring').style.height='36px';ring.querySelector('.cursor-ring').style.borderColor='rgba(0,212,232,.4)';});
+});
+
+/* ── NEURAL CANVAS ── */
+const canvas=document.getElementById('neuralCanvas');
+const ctx=canvas.getContext('2d');
+let W,H,nodes=[];
+function resize(){W=canvas.width=window.innerWidth;H=canvas.height=window.innerHeight;}
+resize();window.addEventListener('resize',resize);
+function makeNodes(n){nodes=[];for(let i=0;i<n;i++)nodes.push({x:Math.random()*W,y:Math.random()*H,vx:(Math.random()-.5)*.2,vy:(Math.random()-.5)*.2,r:Math.random()*1.8+.5,pulse:Math.random()*Math.PI*2});}
+makeNodes(45);
+function drawNeural(){
+  ctx.clearRect(0,0,W,H);const t=Date.now()/1000;
+  for(let i=0;i<nodes.length;i++)for(let j=i+1;j<nodes.length;j++){
+    const dx=nodes[j].x-nodes[i].x,dy=nodes[j].y-nodes[i].y,dist=Math.sqrt(dx*dx+dy*dy);
+    if(dist<150){const a=(1-dist/150)*.14;ctx.beginPath();ctx.moveTo(nodes[i].x,nodes[i].y);ctx.lineTo(nodes[j].x,nodes[j].y);const ip=dist<80&&Math.sin(t*2+i)>.8;ctx.strokeStyle=ip?`rgba(108,159,255,${a*1.4})`:`rgba(0,212,232,${a})`;ctx.lineWidth=ip?1:.4;ctx.stroke();}
+  }
+  for(let n of nodes){n.x+=n.vx;n.y+=n.vy;if(n.x<0||n.x>W)n.vx*=-1;if(n.y<0||n.y>H)n.vy*=-1;n.pulse+=.018;const g=Math.sin(n.pulse)*.5+.5;ctx.beginPath();ctx.arc(n.x,n.y,n.r*(1+g*.4),0,Math.PI*2);ctx.fillStyle=`rgba(0,212,232,${.22+g*.32})`;ctx.fill();}
+  requestAnimationFrame(drawNeural);
+}
+drawNeural();
+
+/* ── SCROLL REVEAL ── */
+const ro=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');ro.unobserve(e.target);}});},{threshold:.1});
+document.querySelectorAll('.reveal').forEach(el=>ro.observe(el));
+
+/* ── INTEREST TAGS ── */
+document.querySelectorAll('.itag').forEach(tag=>{
+  tag.addEventListener('click',()=>tag.classList.toggle('selected'));
+});
+
+/* ── FAQ ACCORDION ── */
+function toggleFaq(btn){
+  const item=btn.closest('.faq-item');
+  const isOpen=item.classList.contains('open');
+  document.querySelectorAll('.faq-item').forEach(i=>i.classList.remove('open'));
+  if(!isOpen)item.classList.add('open');
+}
+
+/* ── FORM SUBMIT ── */
+function handleSubmit(e){
+  e.preventDefault();
+  const btn=document.getElementById('submitBtn');
+  btn.textContent='Transmitting…';btn.style.opacity='.7';btn.disabled=true;
+  setTimeout(()=>{
+    document.getElementById('contactFormWrap').style.display='none';
+    const s=document.getElementById('successState');
+    s.style.display='block';
+    s.style.animation='fadeUp .6s ease both';
+  },1600);
+}
+</script>
+</body>
+</html>
