@@ -389,17 +389,66 @@ function tickMetrics(){
 setInterval(tickMetrics,2000);
 
 /* ── LOGIN HANDLER ── */
-function handleLogin(e){
+async function handleLogin(e){
+
   e.preventDefault();
-  const btn=document.getElementById('loginBtn');
-  btn.textContent='Authenticating...';
-  btn.style.opacity='.7';
-  btn.disabled=true;
-  setTimeout(()=>{
-    btn.textContent='✓ Access Granted — Redirecting';
-    btn.style.background='linear-gradient(135deg,var(--green),var(--neural))';
-    setTimeout(()=>{window.location.href='dashboard.html';},1200);
-  },1600);
+
+  const email = document.getElementById("email").value;
+  const password = document.getElementById("password").value;
+
+  const btn = document.getElementById("loginBtn");
+
+  btn.textContent = "Authenticating...";
+  btn.disabled = true;
+
+  try {
+
+    const response = await fetch("/api/login", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        email,
+        password
+      })
+    });
+
+    const data = await response.json();
+
+    if (data.success) {
+
+      btn.textContent = "✓ Access Granted";
+
+      setTimeout(() => {
+
+        if (data.role === "admin")
+          window.location.href = "admin.html";
+
+        else
+          window.location.href = "dashboard.html";
+
+      }, 800);
+
+    } else {
+
+      alert("Invalid email or password");
+
+      btn.textContent = "Access Command Center";
+      btn.disabled = false;
+
+    }
+
+  } catch (error) {
+
+    alert("Server error");
+
+    btn.textContent = "Access Command Center";
+    btn.disabled = false;
+
+  }
+
+}
 }
 </script>
 </body>
