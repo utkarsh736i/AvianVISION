@@ -477,7 +477,7 @@ import { initializeApp }
 import { getAuth, createUserWithEmailAndPassword,
          signInWithEmailAndPassword, signOut,
          onAuthStateChanged, sendPasswordResetEmail,
-         setPersistence, browserLocalStorage, browserSessionStorage }
+         setPersistence, browserLocalPersistence, browserSessionPersistence }
   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import { getDatabase, ref, set }
   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
@@ -549,7 +549,7 @@ async function signup(email, password) {
 
 // ── LOGIN ─────────────────────────────────────────────────
 async function login(email, password, remember) {
-  await setPersistence(auth, remember ? browserLocalStorage : browserSessionStorage);
+  await setPersistence(auth, remember ? browserLocalPersistence : browserSessionPersistence);
   const cred = await signInWithEmailAndPassword(auth, email, password);
   return cred.user;
 }
