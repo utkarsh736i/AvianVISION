@@ -508,7 +508,7 @@ async function signup(email, password) {
 // LOGIN
 // ════════════════════════
 async function login(email, password, remember) {
-  await setPersistence(auth, remember ? browserLocalStorage : browserSessionStorage);
+  await setPersistence(auth, remember ? browserLocalPersistence : browserSessionPersistence);
   const cred = await signInWithEmailAndPassword(auth, email, password);
   return cred.user;
 }
