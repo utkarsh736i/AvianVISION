@@ -1,0 +1,875 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ReflexSense — Firebase Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Open+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+
+<!-- Firebase SDK v10 — Auth + Database -->
+<script type="module">
+import { initializeApp, getApps }
+  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getAuth, onAuthStateChanged, signOut }
+  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getDatabase, ref, onValue, query, orderByChild, startAt, limitToLast, off }
+  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+// ── Read config saved by login.html (key: 'rs_fb') ──────────────────
+function getStoredConfig() {
+  try { return JSON.parse(localStorage.getItem('rs_fb') || 'null'); } catch(e) { return null; }
+}
+
+const cfg = getStoredConfig();
+
+// Only redirect if there is truly NO config at all (not just placeholder check —
+// the user may have already filled it in login.html before arriving here).
+if (!cfg || !cfg.apiKey || !cfg.databaseURL) {
+  window.location.replace('login.html');
+} else {
+  try {
+    const app      = getApps().length ? getApps()[0] : initializeApp(cfg);
+    const auth     = getAuth(app);
+    const database = getDatabase(app);
+
+    // ── Auth guard ────────────────────────────────────────────────────
+    // Use onAuthStateChanged ONCE. If no user after first check → login.
+    // Do NOT call replace() on every subsequent token-refresh call.
+    let _checked = false;
+    onAuthStateChanged(auth, user => {
+      if (_checked) return;   // ← prevents the redirect loop
+      _checked = true;
+
+      if (!user) {
+        window.location.replace('login.html');
+        return;
+      }
+
+      // ── Logged in ────────────────────────────────────────────────────
+      const uid = user.uid;
+      sessionStorage.setItem('se_uid',   uid);
+      sessionStorage.setItem('se_email', user.email);
+
+      // Show email in header
+      const emailEl = document.getElementById('userEmail');
+      if (emailEl) emailEl.textContent = user.email;
+      const userPill = document.getElementById('userPill');
+      if (userPill) userPill.style.display = '';
+
+      // Expose logout
+      window.authLogout = async () => {
+        await signOut(auth);
+        sessionStorage.removeItem('se_uid');
+        sessionStorage.removeItem('se_email');
+        window.location.replace('login.html');
+      };
+
+      // ── DB path: users/{uid}/devices  ────────────────────────────────
+      // Structure from Firebase screenshot:
+      //   users / {uid} / devices / {deviceName} / latest / {sensorKey}: value
+      //                           / {deviceName} / {pushKey} / timestamp + values  (historical)
+      // We root at users/{uid}/devices so the dashboard sees all the user's devices.
+      const devicesPath = `users/${uid}/devices`;
+
+      window._uid             = uid;
+      window._devicesPath     = devicesPath;
+      window._db              = database;
+      window._makeRef         = (path) => ref(database, path);
+      window._dbRef           = ref(database, devicesPath);   // ← correct path
+      window._fbRef           = ref;
+      window._fbQuery         = query;
+      window._fbOrderByChild  = orderByChild;
+      window._fbStartAt       = startAt;
+      window._fbLimitToLast   = limitToLast;
+      window._fbOff           = off;
+      window._fbOnValue       = onValue;
+      window._fbReady         = true;
+
+      window.dispatchEvent(new Event('fb-ready'));
+    });
+
+  } catch(e) {
+    console.error('Firebase init error:', e);
+    window.dispatchEvent(new CustomEvent('fb-error', { detail: e.message }));
+  }
+}
+</script>
+
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;overflow:hidden;}
+:root{
+  --bg:     #f4f7fb;
+  --bg2:    #eef2f7;
+  --card:   #ffffff;
+  --border: #dde4ef;
+  --bdr2:   #c5d1e8;
+  --bdr3:   #a0b4d6;
+  --blue:   #2563eb;
+  --blue2:  #1d4ed8;
+  --blue3:  #3b82f6;
+  --red:    #dc2626;
+  --orange: #f97316;
+  --green:  #16a34a;
+  --t1:     #0f172a;
+  --t2:     #334155;
+  --t3:     #64748b;
+  --t4:     #94a3b8;
+  --sh:     0 1px 4px rgba(0,0,0,.06), 0 4px 16px rgba(0,0,0,.04);
+  --sh2:    0 2px 8px rgba(0,0,0,.08), 0 8px 32px rgba(0,0,0,.06);
+}
+body{background:var(--bg);color:var(--t1);font-family:'Open Sans',sans-serif;display:flex;flex-direction:column;}
+
+/* ── HEADER ── */
+.hdr{
+  flex-shrink:0;display:flex;align-items:center;gap:14px;
+  padding:0 22px;height:56px;
+  background:rgba(255,255,255,.97);border-bottom:1px solid var(--border);
+  backdrop-filter:blur(20px);z-index:100;
+}
+.brand{display:flex;align-items:center;gap:9px;text-decoration:none;}
+.brand-mark{
+  width:30px;height:30px;border-radius:8px;
+  background:linear-gradient(135deg,var(--blue),var(--blue3));
+  display:flex;align-items:center;justify-content:center;
+}
+.brand-mark svg{width:15px;height:15px;stroke:white;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;}
+.brand-name{font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:700;letter-spacing:1.5px;color:var(--t1);}
+.brand-name em{color:var(--blue);font-style:normal;}
+.brand-sub{font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--t4);letter-spacing:1.2px;margin-top:1px;}
+.sep{width:1px;height:24px;background:var(--border);flex-shrink:0;}
+
+.spill{
+  display:flex;align-items:center;gap:5px;
+  padding:3px 10px;border-radius:20px;border:1px solid var(--bdr2);
+  font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;
+  color:var(--t3);background:var(--bg2);white-space:nowrap;
+}
+.spill.conn{border-color:rgba(22,163,74,.4);color:var(--green);background:rgba(22,163,74,.05);}
+.spill.live{border-color:rgba(37,99,235,.4);color:var(--blue);background:rgba(37,99,235,.05);}
+.spill.err{border-color:rgba(220,38,38,.4);color:var(--red);background:rgba(220,38,38,.05);}
+.pdot{width:6px;height:6px;border-radius:50%;background:currentColor;flex-shrink:0;}
+.pdot.bl{animation:bl 1.2s infinite;}
+@keyframes bl{0%,100%{opacity:1}50%{opacity:.15}}
+
+.hdr-right{display:flex;align-items:center;gap:8px;margin-left:auto;}
+.hbtn{
+  display:flex;align-items:center;gap:5px;
+  padding:5px 12px;border-radius:6px;border:1px solid var(--bdr2);
+  font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;
+  color:var(--t3);background:transparent;cursor:pointer;transition:all .15s;
+}
+.hbtn:hover{border-color:var(--blue);color:var(--blue);background:rgba(37,99,235,.05);}
+.hbtn svg{width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2;}
+.clock{font-family:'JetBrains Mono',monospace;text-align:right;}
+.clock-t{font-size:13px;font-weight:600;color:var(--t1);}
+.clock-d{font-size:9px;color:var(--t4);letter-spacing:.4px;}
+
+/* ── RANGE BAR ── */
+.rbar{
+  flex-shrink:0;background:white;border-bottom:1px solid var(--border);
+  padding:8px 22px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;z-index:50;
+}
+.rlbl{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--t4);letter-spacing:.5px;white-space:nowrap;margin-right:2px;}
+.rbtn{
+  padding:4px 12px;border-radius:16px;border:1px solid var(--bdr2);
+  font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;
+  color:var(--t3);background:transparent;cursor:pointer;transition:all .15s;white-space:nowrap;
+}
+.rbtn:hover{border-color:var(--bdr3);color:var(--t2);}
+.rbtn.on{border-color:var(--blue);color:var(--blue);background:rgba(37,99,235,.06);}
+.crange{display:flex;align-items:center;gap:6px;margin-left:6px;}
+.crange input[type=datetime-local]{
+  background:var(--bg2);border:1px solid var(--bdr2);color:var(--t1);
+  border-radius:6px;padding:4px 8px;
+  font-family:'JetBrains Mono',monospace;font-size:10px;outline:none;
+  transition:border-color .2s;cursor:pointer;
+}
+.crange input[type=datetime-local]:focus{border-color:var(--blue);}
+.rstats{margin-left:auto;display:flex;gap:14px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--t4);}
+.rstats b{color:var(--t2);}
+
+/* ── WORKSPACE ── */
+.ws{flex:1;overflow-y:auto;padding:14px 18px;display:flex;flex-direction:column;gap:12px;}
+.ws::-webkit-scrollbar{width:4px;}
+.ws::-webkit-scrollbar-thumb{background:var(--bdr2);border-radius:2px;}
+
+/* ── STATE CARDS ── */
+.state-card{
+  background:white;border:1px solid var(--border);border-radius:12px;
+  padding:48px 24px;display:flex;flex-direction:column;align-items:center;
+  gap:12px;text-align:center;
+}
+.state-card svg{width:40px;height:40px;stroke:var(--t4);fill:none;stroke-width:1.4;}
+.state-card h3{font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:700;color:var(--t2);}
+.state-card p{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--t4);max-width:360px;line-height:1.7;}
+.spinner{width:28px;height:28px;border:2px solid var(--bdr2);border-top-color:var(--blue);border-radius:50%;animation:spin .7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── SUMMARY ── */
+.sum-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;}
+.scard{
+  background:white;border:1px solid var(--border);border-radius:10px;
+  padding:12px 14px;box-shadow:var(--sh);
+}
+.scard-lbl{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--t4);letter-spacing:1.2px;text-transform:uppercase;margin-bottom:5px;}
+.scard-val{font-family:'Barlow Condensed',sans-serif;font-size:26px;font-weight:700;line-height:1;}
+.scard-sub{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--t4);margin-top:4px;}
+.trend-up{color:var(--red);font-weight:700;}
+.trend-dn{color:var(--green);font-weight:700;}
+
+/* ── CHART CARDS ── */
+.cgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:12px;}
+.ccard{
+  background:white;border:1px solid var(--border);border-radius:12px;
+  overflow:hidden;box-shadow:var(--sh);transition:box-shadow .2s,border-color .2s;
+}
+.ccard:hover{box-shadow:var(--sh2);border-color:var(--bdr2);}
+.ccard.w-warn{border-left:3px solid var(--orange);}
+.ccard.w-crit{border-left:3px solid var(--red);animation:cp 2s infinite;}
+@keyframes cp{0%,100%{box-shadow:var(--sh)}50%{box-shadow:0 0 0 3px rgba(220,38,38,.1)}}
+
+.cc-hdr{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:10px 14px 8px;border-bottom:1px solid var(--border);
+}
+.cc-title{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;color:var(--t3);letter-spacing:1px;text-transform:uppercase;}
+.badge{font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;padding:2px 7px;border-radius:4px;}
+.badge.ok{background:rgba(22,163,74,.08);color:var(--green);border:1px solid rgba(22,163,74,.25);}
+.badge.warn{background:rgba(249,115,22,.08);color:var(--orange);border:1px solid rgba(249,115,22,.25);}
+.badge.crit{background:rgba(220,38,38,.08);color:var(--red);border:1px solid rgba(220,38,38,.25);}
+
+.cc-body{padding:10px 14px 12px;}
+.cc-num{font-family:'Barlow Condensed',sans-serif;font-size:32px;font-weight:700;line-height:1;display:block;margin-bottom:8px;}
+.cc-chart{height:58px;margin-bottom:6px;}
+.cc-meta{display:flex;justify-content:space-between;font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--t4);}
+.cc-meta b{color:var(--t2);}
+
+/* ── LOG ── */
+.logcard{background:white;border:1px solid var(--border);border-radius:12px;overflow:hidden;box-shadow:var(--sh);}
+.loghdr{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--border);}
+.logtitle{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;color:var(--t3);letter-spacing:.8px;text-transform:uppercase;}
+.logbody{max-height:150px;overflow-y:auto;font-family:'JetBrains Mono',monospace;font-size:10px;}
+.logbody::-webkit-scrollbar{width:3px;}
+.logbody::-webkit-scrollbar-thumb{background:var(--bdr2);border-radius:2px;}
+.logrow{display:flex;gap:10px;padding:5px 14px;border-bottom:1px solid var(--border);transition:background .1s;}
+.logrow:hover{background:var(--bg2);}
+.log-ts{color:var(--t4);flex-shrink:0;width:128px;}
+.log-k{color:var(--blue);flex-shrink:0;width:110px;font-weight:600;}
+.log-v{color:var(--t1);font-weight:600;}
+.log-empty{padding:18px;text-align:center;color:var(--t4);}
+
+/* ── TOAST ── */
+.toast{
+  position:fixed;bottom:18px;right:18px;z-index:999;
+  background:white;border:1px solid var(--bdr2);border-radius:8px;
+  padding:9px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--t1);
+  box-shadow:var(--sh2);transform:translateY(80px);opacity:0;transition:all .25s;max-width:320px;
+}
+.toast.show{transform:translateY(0);opacity:1;}
+.toast.ok{border-left:3px solid var(--green);}
+.toast.err{border-left:3px solid var(--red);}
+.toast.warn{border-left:3px solid var(--orange);}
+
+/* ── MODAL ── */
+.moverlay{
+  display:none;position:fixed;inset:0;
+  background:rgba(15,23,42,.45);z-index:500;
+  align-items:center;justify-content:center;backdrop-filter:blur(5px);
+}
+.moverlay.show{display:flex;}
+.modal{
+  background:white;border:1px solid var(--bdr2);border-radius:16px;
+  padding:26px;width:510px;max-width:95vw;max-height:88vh;overflow-y:auto;box-shadow:var(--sh2);
+}
+.modal h3{font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:700;color:var(--t1);margin-bottom:4px;}
+.modal-sub{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--t4);margin-bottom:18px;line-height:1.6;}
+.frow{margin-bottom:12px;}
+.flbl{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--t4);letter-spacing:.8px;text-transform:uppercase;display:block;margin-bottom:5px;}
+.finp{
+  width:100%;background:var(--bg2);border:1px solid var(--bdr2);color:var(--t1);
+  border-radius:7px;padding:7px 11px;
+  font-family:'JetBrains Mono',monospace;font-size:11px;outline:none;transition:border-color .2s;
+}
+.finp:focus{border-color:var(--blue);}
+.mnote{
+  padding:10px 12px;background:rgba(37,99,235,.04);border:1px solid rgba(37,99,235,.15);
+  border-radius:7px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--t3);line-height:1.7;margin-top:10px;
+}
+.mnote code{color:var(--blue);background:rgba(37,99,235,.07);padding:1px 5px;border-radius:3px;}
+.mactions{display:flex;gap:8px;justify-content:flex-end;margin-top:18px;padding-top:14px;border-top:1px solid var(--border);}
+.mbtn{
+  padding:7px 18px;border-radius:7px;border:1px solid;
+  font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:700;
+  cursor:pointer;transition:all .15s;
+}
+.mbtn.pri{border-color:var(--blue);color:var(--blue);background:rgba(37,99,235,.06);}
+.mbtn.pri:hover{background:rgba(37,99,235,.14);}
+.mbtn.sec{border-color:var(--bdr2);color:var(--t2);background:transparent;}
+
+/* ── USER PILL ── */
+.spill.conn { border-color:rgba(22,163,74,.4); color:var(--green); background:rgba(22,163,74,.05); }
+#userPill { font-family:'JetBrains Mono',monospace; font-size:10px; font-weight:600; max-width:180px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="hdr">
+  <a class="brand" href="#">
+    <div class="brand-mark">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><line x1="12" y1="9" x2="12" y2="3"/><line x1="14.6" y1="9.7" x2="19" y2="6"/><line x1="14.6" y1="14.3" x2="19" y2="18"/><line x1="12" y1="15" x2="12" y2="21"/><line x1="9.4" y1="14.3" x2="5" y2="18"/><line x1="9.4" y1="9.7" x2="5" y2="6"/></svg>
+    </div>
+    <div>
+      <div class="brand-name">Reflex<em>Sense</em></div>
+      <div class="brand-sub">FIREBASE · NERVEDASH</div>
+    </div>
+  </a>
+  <div class="sep"></div>
+  <div class="spill" id="connPill"><div class="pdot"></div><span id="connTxt">Not connected</span></div>
+  <div class="spill" id="modePill"><div class="pdot bl" id="liveDot" style="display:none"></div><span id="modeTxt">Idle</span></div>
+
+  <div class="hdr-right">
+    <!-- User email pill (populated by auth module) -->
+    <div class="spill conn" id="userPill" style="display:none">
+      <svg viewBox="0 0 24 24" style="width:11px;height:11px;stroke:currentColor;fill:none;stroke-width:2;flex-shrink:0"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      <span id="userEmail">—</span>
+    </div>
+    <!-- Logout -->
+    <button class="hbtn" onclick="authLogout ? authLogout() : (window.location.href='login.html')" title="Sign out">
+      <svg viewBox="0 0 24 24" style="width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      Sign Out
+    </button>
+    <div class="clock"><div class="clock-t" id="clockT">--:--:--</div><div class="clock-d" id="clockD">---</div></div>
+  </div>
+</header>
+
+<!-- RANGE BAR -->
+<div class="rbar">
+  <span class="rlbl">TIME RANGE</span>
+  <button class="rbtn on" data-r="live" onclick="setRange(this,'live')">⬤ Live</button>
+  <button class="rbtn" data-r="3600" onclick="setRange(this,3600)">1 Hour</button>
+  <button class="rbtn" data-r="43200" onclick="setRange(this,43200)">12 Hours</button>
+  <button class="rbtn" data-r="86400" onclick="setRange(this,86400)">1 Day</button>
+  <button class="rbtn" data-r="604800" onclick="setRange(this,604800)">7 Days</button>
+  <button class="rbtn" data-r="2592000" onclick="setRange(this,2592000)">1 Month</button>
+  <div class="crange">
+    <span class="rlbl">CUSTOM FROM</span>
+    <input type="datetime-local" id="customFrom" onchange="applyCustom()">
+    <span class="rlbl">TO</span>
+    <input type="datetime-local" id="customTo" onchange="applyCustom()">
+  </div>
+  <div class="rstats">
+    <span>Records <b id="sRec">0</b></span>
+    <span>Sensors <b id="sSen">0</b></span>
+    <span>Updated <b id="sLast">--</b></span>
+  </div>
+</div>
+
+<!-- WORKSPACE -->
+<div class="ws" id="ws">
+  <div class="state-card" id="emptyState">
+    <div class="spinner"></div>
+    <h3>Connecting to Firebase…</h3>
+    <p>Authenticating with your session from the login page. If this takes too long, <a href="login.html" style="color:var(--blue)">sign in again</a>.</p>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- Modal removed: config is inherited from login.html -->
+
+<script>
+// ═══════════════════════════════════════════════
+// CONSTANTS & STATE
+// ═══════════════════════════════════════════════
+const COLORS = ['#2563eb','#16a34a','#f97316','#dc2626','#7c3aed','#0891b2','#be185d','#d97706','#059669','#6366f1'];
+let colorMap = {}, colorIdx = 0;
+function getColor(k) {
+  if (!colorMap[k]) { colorMap[k] = COLORS[colorIdx++ % COLORS.length]; }
+  return colorMap[k];
+}
+
+let currentRange = 'live';
+let customFromTs = null, customToTs = null;
+let allData = [];
+let charts = {};
+let fbReady = false;
+let liveListenerOff = null;
+let toastTmr = null;
+let liveHistory = {};   // rolling buffer for live /latest data: { sensorKey: { ts:[], vals:[] } }
+
+// ═══════════════════════════════════════════════
+// CLOCK
+// ═══════════════════════════════════════════════
+(function tick() {
+  const n = new Date();
+  document.getElementById('clockT').textContent = n.toLocaleTimeString('en-GB');
+  document.getElementById('clockD').textContent = n.toLocaleDateString('en-GB',{weekday:'short',day:'2-digit',month:'short'});
+  setTimeout(tick, 1000);
+})();
+
+// Config is read from localStorage (key: rs_fb) by the Firebase module above.
+// Management of that config is done in login.html.
+
+// Modal functions removed — config inherited from login.html.
+
+// Firebase init is handled by the module script above.
+
+// ═══════════════════════════════════════════════
+// LISTENER MANAGEMENT
+// ═══════════════════════════════════════════════
+function detachListener() {
+  if (liveListenerOff) { liveListenerOff(); liveListenerOff = null; }
+  liveHistory = {};   // reset rolling buffer when switching ranges
+}
+
+function attachListener() {
+  if (!fbReady) return;
+  detachListener();
+  allData = [];
+
+  if (currentRange === 'live') {
+    // ── LIVE MODE ─────────────────────────────────────────────────────
+    // Listen to users/{uid}/devices in real-time.
+    // Structure: devices/{deviceName}/latest/{sensorKey}: value
+    // We read the entire devices node and pick up "latest" from each device.
+    setModePill('live','⬤ Live');
+    liveListenerOff = window._fbOnValue(window._dbRef, snap => {
+      allData = parseDevicesSnapshot(snap, null, true);
+      renderAll(allData, true);
+    }, err => {
+      setConnPill('err','Read error');
+      toast('Read error: ' + err.message, 'err');
+    });
+
+  } else {
+    // ── HISTORICAL MODE ───────────────────────────────────────────────
+    // Historical pushes live under devices/{deviceName}/{pushKey}/
+    // Each push record has: timestamp + sensor values
+    setModePill('hist','Historical');
+    showLoading();
+    let fromMs, toMs;
+    if (currentRange === 'custom') {
+      fromMs = customFromTs; toMs = customToTs;
+    } else {
+      toMs = Date.now(); fromMs = toMs - currentRange * 1000;
+    }
+    const toStr = tsToStr(toMs);
+
+    // Query each device node ordered by timestamp
+    window._fbOnValue(window._dbRef, snap => {
+      allData = parseDevicesSnapshot(snap, toStr, false);
+      renderAll(allData, false);
+    }, { onlyOnce: true });
+  }
+}
+
+function tsToStr(ms) {
+  return new Date(ms).toISOString().slice(0,19).replace('T',' ');
+}
+
+// ── Parse the devices/{deviceName}/... structure ─────────────────────
+// In LIVE mode  → reads devices/{name}/latest  (a flat key:value object, no timestamp)
+// In HIST mode  → reads devices/{name}/{pushKey} records with timestamp + values
+function parseDevicesSnapshot(snap, cutoffStr, isLive) {
+  const devicesRaw = snap.val();
+  if (!devicesRaw) return [];
+  const out = [];
+
+  Object.entries(devicesRaw).forEach(([deviceName, deviceData]) => {
+    if (!deviceData || typeof deviceData !== 'object') return;
+
+    if (isLive) {
+      // ── "latest" node: devices/{name}/latest/{sensorKey}: number ──
+      const latest = deviceData.latest;
+      if (!latest || typeof latest !== 'object') return;
+      const vals = {};
+      Object.entries(latest).forEach(([k, v]) => {
+        const n = parseFloat(v);
+        if (!isNaN(n)) vals[`${deviceName}/${k}`] = n;   // prefix with device name
+      });
+      if (Object.keys(vals).length) {
+        const now = Date.now();
+        out.push({ fbKey: deviceName, ts: now, tsStr: tsToStr(now), vals, deviceName });
+      }
+    } else {
+      // ── Historical push records: devices/{name}/{pushKey}/{timestamp, ...vals} ──
+      Object.entries(deviceData).forEach(([pushKey, rec]) => {
+        if (pushKey === 'latest') return;   // skip the latest node in history mode
+        if (!rec || typeof rec !== 'object') return;
+        const tsStr = rec.timestamp; if (!tsStr) return;
+        if (cutoffStr && tsStr > cutoffStr) return;
+        let tsMs;
+        try { tsMs = new Date(tsStr.replace(' ', 'T')).getTime(); } catch(e){ return; }
+        if (isNaN(tsMs)) return;
+        const vals = {};
+        Object.entries(rec).forEach(([k, v]) => {
+          if (k === 'timestamp') return;
+          const n = parseFloat(v);
+          if (!isNaN(n)) vals[`${deviceName}/${k}`] = n;
+        });
+        if (Object.keys(vals).length) out.push({ fbKey: pushKey, ts: tsMs, tsStr, vals, deviceName });
+      });
+    }
+  });
+
+  out.sort((a, b) => a.ts - b.ts);
+  return out;
+}
+
+// Legacy alias (kept in case anything references it)
+function parseSnapshot(snap, cutoff) {
+  return parseDevicesSnapshot(snap, cutoff, false);
+}
+
+// ═══════════════════════════════════════════════
+// RENDER
+// ═══════════════════════════════════════════════
+function renderAll(data, isLive) {
+  const ws = document.getElementById('ws');
+
+  if (!data.length) {
+    ws.innerHTML = `<div class="state-card">
+      <svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      <h3>No Data in Range</h3>
+      <p>No records found for the selected time window. Try a wider range or verify data is being pushed.</p>
+    </div>`;
+    updateStats(0, 0, '--');
+    return;
+  }
+
+  // Group by sensor key
+  const allKeys = new Set();
+  data.forEach(d => Object.keys(d.vals).forEach(k => allKeys.add(k)));
+  const byKey = {};
+  allKeys.forEach(k => { byKey[k] = { ts:[], vals:[] }; });
+  data.forEach(d => {
+    Object.entries(d.vals).forEach(([k,v]) => {
+      byKey[k].ts.push(d.ts);
+      byKey[k].vals.push(v);
+    });
+  });
+
+  updateStats(data.length, allKeys.size, data[data.length-1].tsStr.slice(11,19));
+
+  // ── LIVE MODE: accumulate a rolling history from /latest snapshots ──────────
+  // Each time Firebase fires, 'data' contains ONE entry (the latest reading).
+  // We append it to a rolling buffer so charts build up over time.
+  if (isLive) {
+    // Merge new latest values into liveHistory
+    data.forEach(d => {
+      Object.entries(d.vals).forEach(([k, v]) => {
+        if (!liveHistory[k]) liveHistory[k] = { ts:[], vals:[] };
+        liveHistory[k].ts.push(d.ts);
+        liveHistory[k].vals.push(v);
+        // Rolling window: keep last 200 points per key
+        if (liveHistory[k].ts.length > 200) {
+          liveHistory[k].ts.shift();
+          liveHistory[k].vals.shift();
+        }
+      });
+    });
+
+    // If charts already rendered, just update them
+    if (document.getElementById('logBody') && Object.keys(charts).length > 0) {
+      allKeys.forEach(k => {
+        if (liveHistory[k]) updateChart(k, liveHistory[k]);
+      });
+      updateSummaryValues(byKey, data);
+      updateLog(Object.entries(liveHistory).flatMap(([k, s]) =>
+        s.ts.map((t, i) => ({ tsStr: tsToStr(t), vals: { [k]: s.vals[i] } }))
+      ).sort((a,b) => b.tsStr.localeCompare(a.tsStr)).slice(0, 50));
+      updateStats(
+        Object.values(liveHistory).reduce((sum, s) => sum + s.vals.length, 0),
+        allKeys.size,
+        tsToStr(Date.now()).slice(11,19)
+      );
+      return;
+    }
+    // First render in live mode — fall through to full render using liveHistory
+    allKeys.forEach(k => { if (liveHistory[k]) byKey[k] = liveHistory[k]; });
+  }
+
+  // Full re-render
+  ws.innerHTML = '';
+
+  // Summary row
+  const sumRow = document.createElement('div');
+  sumRow.className = 'sum-row';
+  allKeys.forEach(k => {
+    const s = byKey[k];
+    const latest = s.vals[s.vals.length-1];
+    const prev   = s.vals[s.vals.length-2];
+    const min    = Math.min(...s.vals);
+    const max    = Math.max(...s.vals);
+    const avg    = s.vals.reduce((a,b)=>a+b,0)/s.vals.length;
+    const color  = getColor(k);
+    let trendHtml = '';
+    if (prev !== undefined) {
+      const d = latest - prev;
+      if (d > 0.3) trendHtml = `<span class="trend-up">▲ +${d.toFixed(2)}</span>`;
+      else if (d < -0.3) trendHtml = `<span class="trend-dn">▼ ${d.toFixed(2)}</span>`;
+      else trendHtml = `<span style="color:var(--t4)">─ stable</span>`;
+    }
+    const sc = document.createElement('div');
+    sc.className = 'scard';
+    sc.style.borderTop = `3px solid ${color}`;
+    sc.id = `scard-${k}`;
+    sc.innerHTML = `
+      <div class="scard-lbl">${k.toUpperCase()}</div>
+      <div class="scard-val" id="scval-${k}" style="color:${color}">${latest.toFixed(2)}</div>
+      <div class="scard-sub" id="scmeta-${k}">avg ${avg.toFixed(1)} · ${min.toFixed(1)}–${max.toFixed(1)}<br>${trendHtml}</div>`;
+    sumRow.appendChild(sc);
+  });
+  ws.appendChild(sumRow);
+
+  // Charts
+  const cgrid = document.createElement('div');
+  cgrid.className = 'cgrid';
+  allKeys.forEach(k => {
+    const s = byKey[k];
+    const latest = s.vals[s.vals.length-1];
+    const min = Math.min(...s.vals);
+    const max = Math.max(...s.vals);
+    const avg = s.vals.reduce((a,b)=>a+b,0)/s.vals.length;
+    const color = getColor(k);
+
+    const cc = document.createElement('div');
+    cc.className = 'ccard';
+    cc.id = `cc-${k}`;
+    cc.innerHTML = `
+      <div class="cc-hdr">
+        <span class="cc-title">${k.replace(/_/g,' ')}</span>
+        <span class="badge ok" id="badge-${k}">OK</span>
+      </div>
+      <div class="cc-body">
+        <span class="cc-num" id="ccn-${k}" style="color:${color}">${latest.toFixed(3)}</span>
+        <div class="cc-chart"><canvas id="cvc-${k}"></canvas></div>
+        <div class="cc-meta">
+          <span>MIN <b id="cmin-${k}">${min.toFixed(2)}</b></span>
+          <span>AVG <b id="cavg-${k}">${avg.toFixed(2)}</b></span>
+          <span>MAX <b id="cmax-${k}">${max.toFixed(2)}</b></span>
+          <span>PTS <b>${s.vals.length}</b></span>
+        </div>
+      </div>`;
+    cgrid.appendChild(cc);
+  });
+  ws.appendChild(cgrid);
+
+  // Log
+  const logcard = document.createElement('div');
+  logcard.className = 'logcard';
+  logcard.innerHTML = `
+    <div class="loghdr">
+      <span class="logtitle">Live Data Log</span>
+      <span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--t4)">last 50 records</span>
+    </div>
+    <div class="logbody" id="logBody"></div>`;
+  ws.appendChild(logcard);
+
+  // Init charts after DOM paint
+  requestAnimationFrame(() => {
+    allKeys.forEach(k => initChart(k, byKey[k]));
+    updateLog(data.slice(-50).reverse());
+  });
+}
+
+function updateSummaryValues(byKey, data) {
+  Object.entries(byKey).forEach(([k, s]) => {
+    const latest = s.vals[s.vals.length-1];
+    const prev   = s.vals[s.vals.length-2];
+    const el = document.getElementById(`scval-${k}`);
+    if (el) el.textContent = latest.toFixed(2);
+    const cel = document.getElementById(`ccn-${k}`);
+    if (cel) cel.textContent = latest.toFixed(3);
+    if (prev !== undefined) {
+      const d = latest - prev;
+      const meta = document.getElementById(`scmeta-${k}`);
+      const min = Math.min(...s.vals), max = Math.max(...s.vals);
+      const avg = s.vals.reduce((a,b)=>a+b,0)/s.vals.length;
+      let trendHtml = '';
+      if (d > 0.3) trendHtml = `<span class="trend-up">▲ +${d.toFixed(2)}</span>`;
+      else if (d < -0.3) trendHtml = `<span class="trend-dn">▼ ${d.toFixed(2)}</span>`;
+      else trendHtml = `<span style="color:var(--t4)">─ stable</span>`;
+      if (meta) meta.innerHTML = `avg ${avg.toFixed(1)} · ${min.toFixed(1)}–${max.toFixed(1)}<br>${trendHtml}`;
+    }
+  });
+}
+
+// ═══════════════════════════════════════════════
+// CHARTS
+// ═══════════════════════════════════════════════
+function buildLabels(ts) {
+  return ts.map(t => {
+    const d = new Date(t);
+    // For live 'latest' snapshots, timestamps are approximate (Date.now()),
+    // so just show HH:MM:SS
+    if (currentRange === 'live')
+      return d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+    if (currentRange <= 3600)
+      return d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+    if (currentRange <= 86400)
+      return d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+    return d.toLocaleDateString('en-GB',{month:'short',day:'2-digit'})+' '+d.getHours().toString().padStart(2,'0')+'h';
+  });
+}
+
+function downsample(ts, vals, max=300) {
+  if (vals.length <= max) return { ts, vals };
+  const step = Math.ceil(vals.length / max);
+  const dts = [], dvals = [];
+  for (let i=0; i<vals.length; i+=step) { dts.push(ts[i]); dvals.push(vals[i]); }
+  return { ts:dts, vals:dvals };
+}
+
+function initChart(key, series) {
+  const el = document.getElementById(`cvc-${key}`); if (!el) return;
+  if (charts[key]) { charts[key].destroy(); delete charts[key]; }
+  const color = getColor(key);
+  const { ts:dts, vals:dvals } = downsample(series.ts, series.vals);
+  const labels = buildLabels(dts);
+  charts[key] = new Chart(el.getContext('2d'), {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{ data:dvals, borderColor:color, backgroundColor:color+'18', borderWidth:1.5, tension:.38, pointRadius:dvals.length>80?0:2, fill:true }]
+    },
+    options: {
+      animation: false, responsive:true, maintainAspectRatio:false,
+      plugins: { legend:{display:false}, tooltip:{mode:'index',intersect:false} },
+      scales: {
+        x: { display:false },
+        y: { display:true, grid:{color:'#dde4ef',lineWidth:.5}, border:{display:false},
+             ticks:{color:'#94a3b8',font:{family:'JetBrains Mono',size:9},maxTicksLimit:3,callback:v=>v.toFixed(1)} }
+      }
+    }
+  });
+}
+
+function updateChart(key, series) {
+  if (!charts[key]) { initChart(key, series); return; }
+  const { ts:dts, vals:dvals } = downsample(series.ts, series.vals);
+  const labels = buildLabels(dts);
+  const c = charts[key];
+  c.data.labels = labels;
+  c.data.datasets[0].data = dvals;
+  c.data.datasets[0].pointRadius = dvals.length > 80 ? 0 : 2;
+  c.update('none');
+
+  // Update meta
+  const min = Math.min(...series.vals), max = Math.max(...series.vals);
+  const avg = series.vals.reduce((a,b)=>a+b,0)/series.vals.length;
+  const el = v => document.getElementById(v);
+  if (el(`cmin-${key}`)) el(`cmin-${key}`).textContent = min.toFixed(2);
+  if (el(`cavg-${key}`)) el(`cavg-${key}`).textContent = avg.toFixed(2);
+  if (el(`cmax-${key}`)) el(`cmax-${key}`).textContent = max.toFixed(2);
+}
+
+// ═══════════════════════════════════════════════
+// LOG
+// ═══════════════════════════════════════════════
+function updateLog(recent) {
+  const body = document.getElementById('logBody'); if (!body) return;
+  if (!recent.length) { body.innerHTML = '<div class="log-empty">No entries yet.</div>'; return; }
+  body.innerHTML = recent.slice(0,50).map(d =>
+    Object.entries(d.vals).map(([k,v]) =>
+      `<div class="logrow"><span class="log-ts">${d.tsStr}</span><span class="log-k">${k}</span><span class="log-v">${v.toFixed(4)}</span></div>`
+    ).join('')
+  ).join('');
+}
+
+// ═══════════════════════════════════════════════
+// RANGE
+// ═══════════════════════════════════════════════
+function setRange(btn, range) {
+  document.querySelectorAll('.rbtn').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  currentRange = range;
+  customFromTs = null; customToTs = null;
+  if (fbReady) attachListener();
+}
+
+function applyCustom() {
+  const from = document.getElementById('customFrom').value;
+  const to   = document.getElementById('customTo').value;
+  if (!from || !to) return;
+  customFromTs = new Date(from).getTime();
+  customToTs   = new Date(to).getTime();
+  if (customToTs <= customFromTs) { toast('End must be after start','warn'); return; }
+  currentRange = 'custom';
+  document.querySelectorAll('.rbtn').forEach(b => b.classList.remove('on'));
+  if (fbReady) attachListener();
+}
+
+// ═══════════════════════════════════════════════
+// UI HELPERS
+// ═══════════════════════════════════════════════
+function setConnPill(state, text) {
+  const p = document.getElementById('connPill');
+  p.className = 'spill ' + (state === 'conn' ? 'conn' : state === 'connecting' ? 'live' : state === 'err' ? 'err' : '');
+  document.getElementById('connTxt').textContent = text;
+}
+
+function setModePill(mode, text) {
+  const p  = document.getElementById('modePill');
+  const ld = document.getElementById('liveDot');
+  p.className = 'spill ' + (mode === 'live' ? 'live' : '');
+  ld.style.display = mode === 'live' ? '' : 'none';
+  document.getElementById('modeTxt').textContent = text;
+}
+
+function showLoading() {
+  document.getElementById('ws').innerHTML = `<div class="state-card"><div class="spinner"></div><h3>Fetching data…</h3><p>Querying Firebase Realtime Database.</p></div>`;
+}
+
+function showError(msg) {
+  document.getElementById('ws').innerHTML = `<div class="state-card">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+    <h3>Connection Error</h3>
+    <p>${msg}<br><br>Check that your Firebase config is correct and that Realtime Database rules allow reads.</p>
+  </div>`;
+}
+
+function updateStats(recs, sens, last) {
+  document.getElementById('sRec').textContent = recs;
+  document.getElementById('sSen').textContent = sens;
+  document.getElementById('sLast').textContent = last;
+}
+
+function toast(msg, type='ok') {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.className = `toast show ${type}`;
+  clearTimeout(toastTmr);
+  toastTmr = setTimeout(() => el.className='toast', 3500);
+}
+
+// ═══════════════════════════════════════════════
+// AUTO-CONNECT
+// Config comes from login.html via localStorage.
+// The Firebase module script handles auth + init,
+// then fires 'fb-ready' when the DB is ready.
+// ═══════════════════════════════════════════════
+window.addEventListener('fb-ready', () => {
+  fbReady = true;
+  setConnPill('conn', 'Connected');
+  // Show user email pill
+  const email = sessionStorage.getItem('se_email');
+  const emailEl = document.getElementById('userEmail');
+  const userPill = document.getElementById('userPill');
+  if (email) {
+    if (emailEl) emailEl.textContent = email;
+    if (userPill) userPill.style.display = '';
+  }
+  attachListener();
+}, { once: true });
+
+window.addEventListener('fb-error', e => {
+  setConnPill('err', 'Error');
+  showError(e.detail || 'Firebase connection failed.');
+}, { once: true });
+</script>
+</body>
+</html>
