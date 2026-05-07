@@ -470,18 +470,35 @@ try {
 // Only auto-redirect to dashboard on the FIRST check.
 // Prevents loop: if already redirecting, do nothing.
 // ════════════════════════
-let _authChecked = false;
-onAuthStateChanged(auth, user => {
-  if (_authChecked) return;   // ignore subsequent calls (e.g. token refresh)
-  _authChecked = true;
+let authResolved = false;
+
+onAuthStateChanged(auth, async (user) => {
+
+  // Prevent repeated redirects later
+  if (authResolved) return;
+
+  // Give Firebase time to restore session
+  await new Promise(resolve => setTimeout(resolve, 500));
+
+  // Mark resolved AFTER waiting
+  authResolved = true;
+
   if (user) {
-    // Already signed in — go straight to dashboard, no loop
-    sessionStorage.setItem('se_uid',   user.uid);
+
+    sessionStorage.setItem('se_uid', user.uid);
     sessionStorage.setItem('se_email', user.email);
-    // Small delay so the page doesn't flash
-    setTimeout(() => { window.location.replace('firebase_dashboard.html'); }, 100);
+
+    console.log("Logged in:", user.email);
+
+    window.location.href = 'firebase_dashboard.html';
+
+  } else {
+
+    console.log("No active session");
+
+    // Stay on login page
   }
-  // If no user — stay on login page, show form normally
+
 });
 
 // ════════════════════════
