@@ -36,15 +36,27 @@ if (!cfg || !cfg.apiKey || !cfg.databaseURL) {
     // ── Auth guard ────────────────────────────────────────────────────
     // Use onAuthStateChanged ONCE. If no user after first check → login.
     // Do NOT call replace() on every subsequent token-refresh call.
-    let _checked = false;
-    onAuthStateChanged(auth, user => {
-      if (_checked) return;   // ← prevents the redirect loop
-      _checked = true;
+   let authResolved = false;
 
-      if (!user) {
-        window.location.replace('login.html');
-        return;
-      }
+onAuthStateChanged(auth, async (user) => {
+
+  // prevent multiple redirects
+  if (authResolved) return;
+
+  // wait one tick so Firebase fully restores session
+  await new Promise(r => setTimeout(r, 300));
+
+  authResolved = true;
+
+  if (!user) {
+    window.location.href = 'login.html';
+    return;
+  }
+
+  console.log("Authenticated:", user.email);
+
+  // continue dashboard loading here
+});
 
       // ── Logged in ────────────────────────────────────────────────────
       const uid = user.uid;
