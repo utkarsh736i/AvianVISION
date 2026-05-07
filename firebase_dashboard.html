@@ -41,22 +41,30 @@ const cfg = getStoredConfig();
     const auth = getAuth(app);
     const database = getDatabase(app);
 
-    let authResolved = false;
+   let authResolved = false;
 
-    onAuthStateChanged(auth, async (user) => {
+onAuthStateChanged(auth, async () => {
 
-      if (authResolved) return;
+  // Ignore repeated token refresh callbacks
+  if (authResolved) return;
 
-      await new Promise(r => setTimeout(r, 500));
+  // Wait for Firebase session restoration
+  await new Promise(resolve => setTimeout(resolve, 1500));
 
-      authResolved = true;
+  // Get CURRENT user after waiting
+  const user = auth.currentUser;
 
-      if (!user) {
-        window.location.href = 'login.html';
-        return;
-      }
+  authResolved = true;
 
-      console.log("Dashboard authenticated:", user.email);
+  if (!user) {
+
+    console.log("No authenticated session");
+
+    window.location.href = 'login.html';
+    return;
+  }
+
+  console.log("Dashboard authenticated:", user.email);
 
       const uid = user.uid;
 
