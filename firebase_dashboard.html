@@ -26,37 +26,48 @@ const cfg = getStoredConfig();
 // Only redirect if there is truly NO config at all (not just placeholder check —
 // the user may have already filled it in login.html before arriving here).
 if (!cfg || !cfg.apiKey || !cfg.databaseURL) {
+
   window.location.replace('login.html');
+
 } else {
+
   try {
-    const app      = getApps().length ? getApps()[0] : initializeApp(cfg);
-    const auth     = getAuth(app);
+
+    const app = getApps().length
+      ? getApps()[0]
+      : initializeApp(cfg);
+
+    const auth = getAuth(app);
     const database = getDatabase(app);
 
-    // ── Auth guard ────────────────────────────────────────────────────
-    // Use onAuthStateChanged ONCE. If no user after first check → login.
-    // Do NOT call replace() on every subsequent token-refresh call.
-   let authResolved = false;
+    let authResolved = false;
 
-onAuthStateChanged(auth, async (user) => {
+    onAuthStateChanged(auth, async (user) => {
 
-  // prevent multiple redirects
-  if (authResolved) return;
+      if (authResolved) return;
 
-  // wait one tick so Firebase fully restores session
-  await new Promise(r => setTimeout(r, 300));
+      await new Promise(r => setTimeout(r, 500));
 
-  authResolved = true;
+      authResolved = true;
 
-  if (!user) {
-    window.location.href = 'login.html';
-    return;
+      if (!user) {
+        window.location.href = 'login.html';
+        return;
+      }
+
+      console.log("Dashboard authenticated:", user.email);
+
+      // dashboard code here
+
+    });
+
+  } catch(e) {
+
+    console.error('Firebase init error:', e);
+
   }
 
-  console.log("Authenticated:", user.email);
-
-  // continue dashboard loading here
-});
+}
 
       // ── Logged in ────────────────────────────────────────────────────
       const uid = user.uid;
