@@ -70,36 +70,66 @@ if (!cfg || !cfg.apiKey || !cfg.databaseURL) {
 }
 
       // ── Logged in ────────────────────────────────────────────────────
+     if (!cfg || !cfg.apiKey || !cfg.databaseURL) {
+
+  window.location.replace('login.html');
+
+} else {
+
+  try {
+
+    const app = getApps().length
+      ? getApps()[0]
+      : initializeApp(cfg);
+
+    const auth = getAuth(app);
+    const database = getDatabase(app);
+
+    let authResolved = false;
+
+    onAuthStateChanged(auth, async (user) => {
+
+      if (authResolved) return;
+
+      await new Promise(r => setTimeout(r, 500));
+
+      authResolved = true;
+
+      if (!user) {
+        window.location.href = 'login.html';
+        return;
+      }
+
+      console.log("Dashboard authenticated:", user.email);
+
       const uid = user.uid;
-      sessionStorage.setItem('se_uid',   uid);
+
+      sessionStorage.setItem('se_uid', uid);
       sessionStorage.setItem('se_email', user.email);
 
-      // Show email in header
       const emailEl = document.getElementById('userEmail');
       if (emailEl) emailEl.textContent = user.email;
+
       const userPill = document.getElementById('userPill');
       if (userPill) userPill.style.display = '';
 
-      // Expose logout
       window.authLogout = async () => {
         await signOut(auth);
+
         sessionStorage.removeItem('se_uid');
         sessionStorage.removeItem('se_email');
-        window.location.replace('login.html');
+
+        window.location.href = 'login.html';
       };
 
-      // ── DB path: users/{uid}/devices  ────────────────────────────────
-      // Structure from Firebase screenshot:
-      //   users / {uid} / devices / {deviceName} / latest / {sensorKey}: value
-      //                           / {deviceName} / {pushKey} / timestamp + values  (historical)
-      // We root at users/{uid}/devices so the dashboard sees all the user's devices.
       const devicesPath = `users/${uid}/devices`;
 
       window._uid             = uid;
       window._devicesPath     = devicesPath;
       window._db              = database;
       window._makeRef         = (path) => ref(database, path);
-      window._dbRef           = ref(database, devicesPath);   // ← correct path
+      window._dbRef           = ref(database, devicesPath);
+
       window._fbRef           = ref;
       window._fbQuery         = query;
       window._fbOrderByChild  = orderByChild;
@@ -107,15 +137,25 @@ if (!cfg || !cfg.apiKey || !cfg.databaseURL) {
       window._fbLimitToLast   = limitToLast;
       window._fbOff           = off;
       window._fbOnValue       = onValue;
-      window._fbReady         = true;
+
+      window._fbReady = true;
 
       window.dispatchEvent(new Event('fb-ready'));
+
     });
 
   } catch(e) {
+
     console.error('Firebase init error:', e);
-    window.dispatchEvent(new CustomEvent('fb-error', { detail: e.message }));
+
+    window.dispatchEvent(
+      new CustomEvent('fb-error', {
+        detail: e.message
+      })
+    );
+
   }
+
 }
 </script>
 
