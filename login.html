@@ -640,7 +640,6 @@ async function doAuth(e) {
       await signup(email, password);
       btnSuccess(btn, '✓ Account Created — Redirecting');
       showToast('Welcome! Account created.', 'success');
-      setTimeout(() => { window.location.href = 'firebase_dashboard.html'; }, 1300);
     } catch(err) {
       console.error('Signup error:', err);
       btnReset(btn);
@@ -652,7 +651,6 @@ async function doAuth(e) {
       await login(email, password, remember);
       btnSuccess(btn, '✓ Access Granted — Redirecting');
       showToast('Signed in successfully.', 'success');
-      setTimeout(() => { window.location.href = 'firebase_dashboard.html'; }, 1200);
     } catch(err) {
       console.error('Login error:', err);
       btnReset(btn);
