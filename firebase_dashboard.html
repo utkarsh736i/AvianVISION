@@ -25,50 +25,6 @@ const cfg = getStoredConfig();
 
 // Only redirect if there is truly NO config at all (not just placeholder check —
 // the user may have already filled it in login.html before arriving here).
-if (!cfg || !cfg.apiKey || !cfg.databaseURL) {
-
-  window.location.replace('login.html');
-
-} else {
-
-  try {
-
-    const app = getApps().length
-      ? getApps()[0]
-      : initializeApp(cfg);
-
-    const auth = getAuth(app);
-    const database = getDatabase(app);
-
-    let authResolved = false;
-
-    onAuthStateChanged(auth, async (user) => {
-
-      if (authResolved) return;
-
-      await new Promise(r => setTimeout(r, 500));
-
-      authResolved = true;
-
-      if (!user) {
-        window.location.href = 'login.html';
-        return;
-      }
-
-      console.log("Dashboard authenticated:", user.email);
-
-      // dashboard code here
-
-    });
-
-  } catch(e) {
-
-    console.error('Firebase init error:', e);
-
-  }
-
-}
-
       // ── Logged in ────────────────────────────────────────────────────
      if (!cfg || !cfg.apiKey || !cfg.databaseURL) {
 
