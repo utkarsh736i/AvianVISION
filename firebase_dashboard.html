@@ -6,9 +6,11 @@
 <title>ReflexSense — NerveDash</title>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Open+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+// Global flag — must be here so both the module and the regular script share it
+window.drillLiveMode = false;
+</script>
 <script type="module">
-
-let drillLiveMode = false;
 import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import { getDatabase, ref, set, push, child } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
@@ -237,7 +239,7 @@ body{background:var(--bg);color:var(--t1);font-family:'Open Sans',sans-serif;dis
     <div class="dm-chart-wrap"><div style="position:relative;height:100%;min-height:220px;"><canvas id="drillCanvas" role="img" aria-label="Drill-down sensor chart"></canvas></div></div>
     <div class="dm-nav">
       <button class="navbtn" onclick="drillPan(-1)">← Earlier</button>
-      <button class="snap-btn" onclick="drillSnapLive()">⬤ Snap to Live</button>
+      <button class="snap-btn" id="snapBtn" onclick="drillSnapLive()">⬤ Snap to Live</button>
       <button class="navbtn" onclick="drillPan(1)">Later →</button>
     </div>
   </div>
@@ -250,6 +252,8 @@ let sessionData={},logRows=[],charts={},totalRecs=0,currentView=50,toastTmr=null
 let serialPort=null,serialReader=null,serialRunning=false;
 let fbBuffer={},fbFlushTimer=null,fbPushReady=false;
 let drillKey=null,drillChart=null,drillZoom=50,drillPanOff=0,drillPanned=false;
+// drillLiveMode lives on window so the ES module block above can also read it
+// window.drillLiveMode is already declared in the inline script before the module
 
 (function tick(){const n=new Date();document.getElementById('clockT').textContent=n.toLocaleTimeString('en-GB');document.getElementById('clockD').textContent=n.toLocaleDateString('en-GB',{weekday:'short',day:'2-digit',month:'short'});setTimeout(tick,1000);})();
 
@@ -335,11 +339,12 @@ function processData(payload){
   document.getElementById('emptyState').style.display='none';
   scheduleRender();
   fbPush(tsStr,payload);
-  if(drillKey && drillLiveMode){
-  drillPanOff = 0;
-  drillPanned = false;
-  refreshDrill();
-}
+  // If drill is open AND live mode is on, auto-refresh the drill chart
+  if(drillKey && window.drillLiveMode){
+    drillPanOff=0;
+    drillPanned=false;
+    refreshDrill();
+  }
 }
 
 function scheduleRender(){if(renderScheduled)return;renderScheduled=true;requestAnimationFrame(()=>{renderScheduled=false;renderAll();});}
@@ -432,6 +437,8 @@ function setView(btn,n){document.querySelectorAll('.rbtn').forEach(b=>b.classLis
 
 function openDrill(key){
   drillKey=key;drillPanOff=0;drillPanned=false;drillZoom=50;
+  window.drillLiveMode=false;
+  updateSnapBtn();
   document.getElementById('dmDot').style.background=getColor(key);
   document.getElementById('dmTitle').textContent=key.replace(/_/g,' ').toUpperCase();
   document.getElementById('drillOv').classList.add('open');
@@ -440,7 +447,12 @@ function openDrill(key){
   refreshDrill();
 }
 
-function closeDrill(){document.getElementById('drillOv').classList.remove('open');drillKey=null;if(drillChart){drillChart.destroy();drillChart=null;}}
+function closeDrill(){
+  document.getElementById('drillOv').classList.remove('open');
+  drillKey=null;
+  window.drillLiveMode=false;
+  if(drillChart){drillChart.destroy();drillChart=null;}
+}
 
 function getDrillSlice(){
   if(!drillKey)return{vals:[],labels:[]};
@@ -481,34 +493,48 @@ function refreshDrill(){
   };
 }
 
-function drillSetZoom(pts,btn){drillZoom=pts;drillPanOff=0;drillPanned=false;document.querySelectorAll('.zbtn').forEach(b=>b.classList.remove('on'));btn.classList.add('on');refreshDrill();}
-function drillPan(dir){const d=sessionData[drillKey];if(!d)return;drillLiveMode = false;
-
-const btn = document.querySelector('.snap-btn');
-btn.style.background = 'rgba(37,99,235,.05)';
-btn.style.borderColor = 'rgba(37,99,235,.4)';
-btn.style.color = 'var(--blue)';
-btn.textContent = '⬤ Snap to Live';const step=Math.max(10,Math.floor((drillZoom||d.vals.length)*.25));drillPanOff=Math.max(0,drillPanOff+dir*step);drillPanned=drillPanOff>0;refreshDrill();}
-function drillSnapLive(){
-  drillLiveMode = !drillLiveMode;
-
-  const btn = document.querySelector('.snap-btn');
-
-  if(drillLiveMode){
-    drillPanOff = 0;
-    drillPanned = false;
-
-    btn.style.background = 'rgba(22,163,74,.12)';
-    btn.style.borderColor = 'var(--green)';
-    btn.style.color = 'var(--green)';
-    btn.textContent = '⬤ LIVE FOLLOWING';
-
-    refreshDrill();
+function updateSnapBtn(){
+  const btn=document.getElementById('snapBtn');
+  if(!btn)return;
+  if(window.drillLiveMode){
+    btn.style.background='rgba(22,163,74,.12)';
+    btn.style.borderColor='var(--green)';
+    btn.style.color='var(--green)';
+    btn.textContent='⬤ LIVE FOLLOWING';
   }else{
-    btn.style.background = 'rgba(37,99,235,.05)';
-    btn.style.borderColor = 'rgba(37,99,235,.4)';
-    btn.style.color = 'var(--blue)';
-    btn.textContent = '⬤ Snap to Live';
+    btn.style.background='rgba(37,99,235,.05)';
+    btn.style.borderColor='rgba(37,99,235,.4)';
+    btn.style.color='var(--blue)';
+    btn.textContent='⬤ Snap to Live';
+  }
+}
+
+function drillSetZoom(pts,btn){
+  drillZoom=pts;drillPanOff=0;drillPanned=false;
+  document.querySelectorAll('.zbtn').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  refreshDrill();
+}
+
+function drillPan(dir){
+  const d=sessionData[drillKey];if(!d)return;
+  // Panning always disables live-follow
+  window.drillLiveMode=false;
+  updateSnapBtn();
+  const step=Math.max(10,Math.floor((drillZoom||d.vals.length)*.25));
+  drillPanOff=Math.max(0,drillPanOff+dir*step);
+  drillPanned=drillPanOff>0;
+  refreshDrill();
+}
+
+function drillSnapLive(){
+  // Toggle live-follow on/off
+  window.drillLiveMode=!window.drillLiveMode;
+  updateSnapBtn();
+  if(window.drillLiveMode){
+    drillPanOff=0;
+    drillPanned=false;
+    refreshDrill();
   }
 }
 
