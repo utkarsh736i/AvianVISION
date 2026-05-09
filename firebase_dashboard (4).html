@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ReflexSense — NerveDash</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Open+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script type="module">
+import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getDatabase, ref, set, push, child } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+function getStoredConfig(){try{return JSON.parse(localStorage.getItem('rs_fb')||'null');}catch(e){return null;}}
+const cfg=getStoredConfig();
+if(!cfg||!cfg.apiKey||cfg.apiKey.startsWith('YOUR_')){window.location.replace('login.html');}
+else{
+  try{
+    const app=getApps().length?getApps()[0]:initializeApp(cfg);
+    const auth=getAuth(app);
+    const database=getDatabase(app);
+    onAuthStateChanged(auth,user=>{
+      if(!user){window.location.replace('login.html');return;}
+      sessionStorage.setItem('se_uid',user.uid);
+      sessionStorage.setItem('se_email',user.email);
+      const emailEl=document.getElementById('userEmail');
+      if(emailEl)emailEl.textContent=user.email;
+      const userPill=document.getElementById('userPill');
+      if(userPill)userPill.style.display='';
+      window.authLogout=async()=>{await signOut(auth);sessionStorage.removeItem('se_uid');sessionStorage.removeItem('se_email');window.location.replace('login.html');};
+      const devRef=ref(database,`users/${user.uid}/devices/shrike01`);
+      window._fbSet=(path,data)=>set(child(devRef,path),data);
+      window._fbPush=(data)=>push(devRef,data);
+      window._fbReady=true;
+      window.dispatchEvent(new Event('fb-ready'));
+    });
+  }catch(e){console.error('Firebase init error:',e);window.dispatchEvent(new CustomEvent('fb-error',{detail:e.message}));}
+}
+</script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;overflow:hidden;}
+:root{--bg:#f4f7fb;--bg2:#eef2f7;--card:#ffffff;--border:#dde4ef;--bdr2:#c5d1e8;--bdr3:#a0b4d6;--blue:#2563eb;--blue3:#3b82f6;--red:#dc2626;--orange:#f97316;--green:#16a34a;--t1:#0f172a;--t2:#334155;--t3:#64748b;--t4:#94a3b8;--sh:0 1px 4px rgba(0,0,0,.06),0 4px 16px rgba(0,0,0,.04);--sh2:0 2px 8px rgba(0,0,0,.08),0 8px 32px rgba(0,0,0,.06);}
+body{background:var(--bg);color:var(--t1);font-family:'Open Sans',sans-serif;display:flex;flex-direction:column;}
+.hdr{flex-shrink:0;display:flex;align-items:center;gap:14px;padding:0 22px;height:56px;background:rgba(255,255,255,.97);border-bottom:1px solid var(--border);backdrop-filter:blur(20px);z-index:100;}
+.brand{display:flex;align-items:center;gap:9px;text-decoration:none;}
+.brand-mark{width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,var(--blue),var(--blue3));display:flex;align-items:center;justify-content:center;}
+.brand-mark svg{width:15px;height:15px;stroke:white;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;}
+.brand-name{font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:700;letter-spacing:1.5px;color:var(--t1);}
+.brand-name em{color:var(--blue);font-style:normal;}
+.brand-sub{font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--t4);letter-spacing:1.2px;margin-top:1px;}
+.sep{width:1px;height:24px;background:var(--border);flex-shrink:0;}
+.spill{display:flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;border:1px solid var(--bdr2);font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;color:var(--t3);background:var(--bg2);white-space:nowrap;}
+.spill.conn{border-color:rgba(22,163,74,.4);color:var(--green);background:rgba(22,163,74,.05);}
+.spill.live{border-color:rgba(37,99,235,.4);color:var(--blue);background:rgba(37,99,235,.05);}
+.spill.err{border-color:rgba(220,38,38,.4);color:var(--red);background:rgba(220,38,38,.05);}
+.pdot{width:6px;height:6px;border-radius:50%;background:currentColor;flex-shrink:0;}
+.pdot.bl{animation:bl 1.2s infinite;}
+@keyframes bl{0%,100%{opacity:1}50%{opacity:.15}}
+.hdr-right{display:flex;align-items:center;gap:8px;margin-left:auto;}
+.hbtn{display:flex;align-items:center;gap:5px;padding:5px 12px;border-radius:6px;border:1px solid var(--bdr2);font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;color:var(--t3);background:transparent;cursor:pointer;transition:all .15s;}
+.hbtn:hover{border-color:var(--blue);color:var(--blue);background:rgba(37,99,235,.05);}
+.hbtn svg{width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+.clock{font-family:'JetBrains Mono',monospace;text-align:right;}
+.clock-t{font-size:13px;font-weight:600;color:var(--t1);}
+.clock-d{font-size:9px;color:var(--t4);letter-spacing:.4px;}
+#userPill{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.cbar{flex-shrink:0;background:white;border-bottom:1px solid var(--border);padding:7px 22px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;z-index:50;}
+.clbl{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--t4);letter-spacing:.5px;white-space:nowrap;}
+.csel{background:var(--bg2);border:1px solid var(--bdr2);color:var(--t1);border-radius:6px;padding:4px 8px;font-family:'JetBrains Mono',monospace;font-size:10px;outline:none;cursor:pointer;}
+.cbtn{padding:5px 14px;border-radius:6px;border:1px solid;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:5px;}
+.cbtn svg{width:11px;height:11px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+.cbtn.conn{border-color:var(--blue);color:var(--blue);background:rgba(37,99,235,.06);}
+.cbtn.conn:hover{background:rgba(37,99,235,.14);}
+.cbtn.stop{border-color:var(--red);color:var(--red);background:rgba(220,38,38,.06);}
+.cbtn.exp{border-color:var(--bdr2);color:var(--t3);background:transparent;margin-left:auto;}
+.cbtn.exp:hover{border-color:var(--bdr3);color:var(--t2);}
+.fb-pill{display:flex;align-items:center;gap:5px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--t4);}
+.fb-dot{width:6px;height:6px;border-radius:50%;background:var(--t4);flex-shrink:0;transition:background .3s;}
+.rbar{flex-shrink:0;background:white;border-bottom:1px solid var(--border);padding:7px 22px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;z-index:50;}
+.rlbl{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--t4);letter-spacing:.5px;white-space:nowrap;margin-right:2px;}
+.rbtn{padding:4px 12px;border-radius:16px;border:1px solid var(--bdr2);font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;color:var(--t3);background:transparent;cursor:pointer;transition:all .15s;}
+.rbtn:hover{border-color:var(--bdr3);color:var(--t2);}
+.rbtn.on{border-color:var(--blue);color:var(--blue);background:rgba(37,99,235,.06);}
+.rstats{margin-left:auto;display:flex;gap:14px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--t4);}
+.rstats b{color:var(--t2);}
+.ws{flex:1;overflow-y:auto;padding:14px 18px;display:flex;flex-direction:column;gap:12px;}
+.ws::-webkit-scrollbar{width:4px;}
+.ws::-webkit-scrollbar-thumb{background:var(--bdr2);border-radius:2px;}
+.state-card{background:white;border:1px solid var(--border);border-radius:12px;padding:48px 24px;display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center;}
+.state-card svg{width:40px;height:40px;stroke:var(--t4);fill:none;stroke-width:1.4;}
+.state-card h3{font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:700;color:var(--t2);}
+.state-card p{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--t4);max-width:360px;line-height:1.7;}
+.sum-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;}
+.scard{background:white;border:1px solid var(--border);border-radius:10px;padding:12px 14px;box-shadow:var(--sh);cursor:pointer;transition:box-shadow .2s,border-color .2s;}
+.scard:hover{box-shadow:var(--sh2);border-color:var(--bdr2);}
+.scard-lbl{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--t4);letter-spacing:1.2px;text-transform:uppercase;margin-bottom:5px;}
+.scard-val{font-family:'Barlow Condensed',sans-serif;font-size:26px;font-weight:700;line-height:1;}
+.scard-sub{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--t4);margin-top:4px;}
+.trend-up{color:var(--red);font-weight:700;}
+.trend-dn{color:var(--green);font-weight:700;}
+.cgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px;}
+.ccard{background:white;border:1px solid var(--border);border-radius:12px;overflow:hidden;box-shadow:var(--sh);cursor:pointer;transition:box-shadow .2s,border-color .2s;position:relative;}
+.ccard:hover{box-shadow:var(--sh2);border-color:var(--bdr2);}
+.ccard:hover .drill-hint{opacity:1;}
+.drill-hint{position:absolute;bottom:8px;right:10px;font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--t4);opacity:0;transition:opacity .2s;pointer-events:none;}
+.ccard.w-warn{border-left:3px solid var(--orange);}
+.ccard.w-crit{border-left:3px solid var(--red);animation:cp 2s infinite;}
+@keyframes cp{0%,100%{box-shadow:var(--sh)}50%{box-shadow:0 0 0 3px rgba(220,38,38,.1)}}
+.cc-hdr{display:flex;align-items:center;justify-content:space-between;padding:10px 14px 8px;border-bottom:1px solid var(--border);}
+.cc-title{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;color:var(--t3);letter-spacing:1px;text-transform:uppercase;}
+.badge{font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;padding:2px 7px;border-radius:4px;}
+.badge.ok{background:rgba(22,163,74,.08);color:var(--green);border:1px solid rgba(22,163,74,.25);}
+.badge.warn{background:rgba(249,115,22,.08);color:var(--orange);border:1px solid rgba(249,115,22,.25);}
+.badge.crit{background:rgba(220,38,38,.08);color:var(--red);border:1px solid rgba(220,38,38,.25);}
+.cc-body{padding:10px 14px 12px;}
+.cc-num{font-family:'Barlow Condensed',sans-serif;font-size:32px;font-weight:700;line-height:1;display:block;margin-bottom:8px;}
+.cc-chart{height:58px;margin-bottom:6px;}
+.cc-meta{display:flex;justify-content:space-between;font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--t4);}
+.cc-meta b{color:var(--t2);}
+.logcard{background:white;border:1px solid var(--border);border-radius:12px;overflow:hidden;box-shadow:var(--sh);}
+.loghdr{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--border);}
+.logtitle{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;color:var(--t3);letter-spacing:.8px;text-transform:uppercase;}
+.logbody{max-height:150px;overflow-y:auto;font-family:'JetBrains Mono',monospace;font-size:10px;}
+.logbody::-webkit-scrollbar{width:3px;}
+.logbody::-webkit-scrollbar-thumb{background:var(--bdr2);border-radius:2px;}
+.logrow{display:flex;gap:10px;padding:5px 14px;border-bottom:1px solid var(--border);transition:background .1s;}
+.logrow:hover{background:var(--bg2);}
+.log-ts{color:var(--t4);flex-shrink:0;width:128px;}
+.log-k{flex-shrink:0;width:110px;font-weight:600;}
+.log-v{color:var(--t1);font-weight:600;}
+.log-empty{padding:18px;text-align:center;color:var(--t4);}
+.toast{position:fixed;bottom:18px;right:18px;z-index:9000;background:white;border:1px solid var(--bdr2);border-radius:8px;padding:9px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--t1);box-shadow:var(--sh2);transform:translateY(80px);opacity:0;transition:all .25s;max-width:320px;}
+.toast.show{transform:translateY(0);opacity:1;}
+.toast.ok{border-left:3px solid var(--green);}
+.toast.err{border-left:3px solid var(--red);}
+.toast.warn{border-left:3px solid var(--orange);}
+.drill-ov{display:none;position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:800;align-items:center;justify-content:center;backdrop-filter:blur(4px);}
+.drill-ov.open{display:flex;}
+.drill-modal{background:white;border:1px solid var(--bdr2);border-radius:16px;width:860px;max-width:96vw;max-height:90vh;display:flex;flex-direction:column;box-shadow:var(--sh2);overflow:hidden;}
+.dm-hdr{display:flex;align-items:center;gap:10px;padding:14px 20px;border-bottom:1px solid var(--border);flex-shrink:0;}
+.dm-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+.dm-title{font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:700;letter-spacing:1px;color:var(--t1);}
+.dm-sub{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--t4);margin-left:4px;}
+.dm-close{margin-left:auto;padding:5px 14px;border-radius:6px;border:1px solid var(--bdr2);font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;color:var(--t3);background:transparent;cursor:pointer;transition:all .15s;}
+.dm-close:hover{border-color:var(--red);color:var(--red);}
+.dm-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:12px 20px;border-bottom:1px solid var(--border);flex-shrink:0;}
+.dmstat{background:var(--bg2);border-radius:8px;padding:8px 12px;}
+.dmstat-lbl{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--t4);letter-spacing:.5px;margin-bottom:3px;}
+.dmstat-val{font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:700;color:var(--t1);}
+.dm-zbar{display:flex;align-items:center;gap:6px;padding:8px 20px;border-bottom:1px solid var(--border);flex-shrink:0;}
+.dm-zlbl{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--t4);letter-spacing:.5px;}
+.zbtn{padding:3px 11px;border-radius:16px;border:1px solid var(--bdr2);font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;color:var(--t3);background:transparent;cursor:pointer;transition:all .15s;}
+.zbtn:hover{border-color:var(--bdr3);color:var(--t2);}
+.zbtn.on{border-color:var(--blue);color:var(--blue);background:rgba(37,99,235,.07);}
+.dm-zhint{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--t4);margin-left:4px;}
+.dm-range{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--blue);margin-left:auto;}
+.dm-chart-wrap{flex:1;min-height:240px;padding:14px 20px 6px;}
+.dm-nav{display:flex;align-items:center;justify-content:space-between;padding:8px 20px 14px;flex-shrink:0;}
+.navbtn{display:flex;align-items:center;gap:5px;padding:5px 14px;border-radius:6px;border:1px solid var(--bdr2);font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;color:var(--t3);background:transparent;cursor:pointer;transition:all .15s;}
+.navbtn:hover{border-color:var(--blue);color:var(--blue);}
+.snap-btn{padding:4px 14px;border-radius:16px;border:1px solid rgba(37,99,235,.4);font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;color:var(--blue);background:rgba(37,99,235,.05);cursor:pointer;transition:all .15s;}
+.snap-btn:hover{background:rgba(37,99,235,.12);}
+</style>
+</head>
+<body>
+<header class="hdr">
+  <a class="brand" href="#">
+    <div class="brand-mark"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><line x1="12" y1="9" x2="12" y2="3"/><line x1="14.6" y1="9.7" x2="19" y2="6"/><line x1="14.6" y1="14.3" x2="19" y2="18"/><line x1="12" y1="15" x2="12" y2="21"/><line x1="9.4" y1="14.3" x2="5" y2="18"/><line x1="9.4" y1="9.7" x2="5" y2="6"/></svg></div>
+    <div><div class="brand-name">Reflex<em>Sense</em></div><div class="brand-sub">SERIAL · NERVEDASH</div></div>
+  </a>
+  <div class="sep"></div>
+  <div class="spill" id="connPill"><div class="pdot"></div><span id="connTxt">No device</span></div>
+  <div class="spill" id="modePill"><div class="pdot bl" id="liveDot" style="display:none"></div><span id="modeTxt">Idle</span></div>
+  <div class="hdr-right">
+    <div class="spill conn" id="userPill" style="display:none">
+      <svg viewBox="0 0 24 24" style="width:11px;height:11px;stroke:currentColor;fill:none;stroke-width:2;flex-shrink:0"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      <span id="userEmail">—</span>
+    </div>
+    <button class="hbtn" onclick="exportCSV()"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Export CSV</button>
+    <button class="hbtn" onclick="authLogout?authLogout():window.location.href='login.html'"><svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>Sign Out</button>
+    <div class="clock"><div class="clock-t" id="clockT">--:--:--</div><div class="clock-d" id="clockD">---</div></div>
+  </div>
+</header>
+<div class="cbar">
+  <span class="clbl">BAUD</span>
+  <select class="csel" id="portBaud">
+    <option value="9600">9600</option><option value="115200">115200</option>
+    <option value="57600">57600</option><option value="38400">38400</option>
+  </select>
+  <button class="cbtn conn" id="connectBtn" onclick="connectSerial()"><svg viewBox="0 0 24 24"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>Connect Serial</button>
+  <button class="cbtn stop" id="stopBtn" onclick="disconnectSerial()" style="display:none"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>Disconnect</button>
+  <div class="spill" id="serialPill"><div class="pdot" id="serialDot" style="background:var(--t4)"></div><span id="serialTxt">No port selected</span></div>
+  <div class="fb-pill"><div class="fb-dot" id="fbDot"></div><span id="fbTxt">Firebase: waiting…</span></div>
+  <button class="cbtn exp" onclick="exportCSV()"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Export CSV</button>
+</div>
+<div class="rbar">
+  <span class="rlbl">SESSION VIEW</span>
+  <button class="rbtn on" onclick="setView(this,50)">Last 50</button>
+  <button class="rbtn" onclick="setView(this,150)">Last 150</button>
+  <button class="rbtn" onclick="setView(this,500)">Last 500</button>
+  <button class="rbtn" onclick="setView(this,0)">All</button>
+  <div class="rstats"><span>Records <b id="sRec">0</b></span><span>Sensors <b id="sSen">0</b></span><span>Updated <b id="sLast">--</b></span></div>
+</div>
+<div class="ws" id="ws">
+  <div class="state-card" id="emptyState">
+    <svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-4 0v2"/><line x1="12" y1="12" x2="12" y2="16"/><line x1="10" y1="14" x2="14" y2="14"/></svg>
+    <h3>No Device Connected</h3>
+    <p>Select baud rate and click <b>Connect Serial</b> to read from your microcontroller.<br>Data pushes to Firebase automatically via your login session.</p>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+<div class="drill-ov" id="drillOv">
+  <div class="drill-modal">
+    <div class="dm-hdr">
+      <div class="dm-dot" id="dmDot"></div>
+      <span class="dm-title" id="dmTitle">--</span>
+      <span class="dm-sub" id="dmSub">-- pts total</span>
+      <button class="dm-close" onclick="closeDrill()">✕ Close</button>
+    </div>
+    <div class="dm-stats">
+      <div class="dmstat"><div class="dmstat-lbl">LATEST</div><div class="dmstat-val" id="dmLatest">--</div></div>
+      <div class="dmstat"><div class="dmstat-lbl">MIN</div><div class="dmstat-val" id="dmMin" style="color:var(--green)">--</div></div>
+      <div class="dmstat"><div class="dmstat-lbl">AVG</div><div class="dmstat-val" id="dmAvg" style="color:var(--blue)">--</div></div>
+      <div class="dmstat"><div class="dmstat-lbl">MAX</div><div class="dmstat-val" id="dmMax" style="color:var(--red)">--</div></div>
+    </div>
+    <div class="dm-zbar">
+      <span class="dm-zlbl">ZOOM</span>
+      <button class="zbtn on" onclick="drillSetZoom(50,this)">50</button>
+      <button class="zbtn" onclick="drillSetZoom(150,this)">150</button>
+      <button class="zbtn" onclick="drillSetZoom(500,this)">500</button>
+      <button class="zbtn" onclick="drillSetZoom(0,this)">All</button>
+      <span class="dm-zhint">scroll=zoom · ←→=pan · ESC=close</span>
+      <span class="dm-range" id="dmRange">--</span>
+    </div>
+    <div class="dm-chart-wrap"><div style="position:relative;height:100%;min-height:220px;"><canvas id="drillCanvas" role="img" aria-label="Drill-down sensor chart"></canvas></div></div>
+    <div class="dm-nav">
+      <button class="navbtn" onclick="drillPan(-1)">← Earlier</button>
+      <button class="snap-btn" onclick="drillSnapLive()">⬤ Snap to Live</button>
+      <button class="navbtn" onclick="drillPan(1)">Later →</button>
+    </div>
+  </div>
+</div>
+<script>
+const COLORS=['#2563eb','#16a34a','#f97316','#dc2626','#7c3aed','#0891b2','#be185d','#d97706','#059669','#6366f1'];
+let colorMap={},colorIdx=0;
+function getColor(k){if(!colorMap[k])colorMap[k]=COLORS[colorIdx++%COLORS.length];return colorMap[k];}
+let sessionData={},logRows=[],charts={},totalRecs=0,currentView=50,toastTmr=null,renderScheduled=false;
+let serialPort=null,serialReader=null,serialRunning=false;
+let fbBuffer={},fbFlushTimer=null,fbPushReady=false;
+let drillKey=null,drillChart=null,drillZoom=50,drillPanOff=0,drillPanned=false;
+
+(function tick(){const n=new Date();document.getElementById('clockT').textContent=n.toLocaleTimeString('en-GB');document.getElementById('clockD').textContent=n.toLocaleDateString('en-GB',{weekday:'short',day:'2-digit',month:'short'});setTimeout(tick,1000);})();
+
+window.addEventListener('fb-ready',()=>{
+  fbPushReady=true;
+  document.getElementById('fbDot').style.cssText='background:var(--green);animation:bl 1.2s infinite';
+  document.getElementById('fbTxt').textContent='Firebase: pushing';
+  const email=sessionStorage.getItem('se_email');
+  if(email){document.getElementById('userEmail').textContent=email;document.getElementById('userPill').style.display='';}
+},{once:true});
+window.addEventListener('fb-error',e=>{
+  document.getElementById('fbDot').style.background='var(--red)';
+  document.getElementById('fbTxt').textContent='Firebase: error';
+  toast('Firebase: '+(e.detail||'check console'),'err');
+},{once:true});
+
+async function connectSerial(){
+  if(!('serial' in navigator)){toast('Use Chrome or Edge for Web Serial','err');return;}
+  try{
+    const baud=parseInt(document.getElementById('portBaud').value)||9600;
+    serialPort=await navigator.serial.requestPort();
+    await serialPort.open({baudRate:baud});
+    serialRunning=true;
+    setConnPill('conn','Connected');setModePill('live','⬤ Live');
+    document.getElementById('stopBtn').style.display='';
+    document.getElementById('connectBtn').style.display='none';
+    document.getElementById('liveDot').style.display='';
+    document.getElementById('serialDot').style.background='var(--green)';
+    document.getElementById('serialTxt').textContent='Port open · '+baud+' baud';
+    toast('Connected at '+baud+' baud','ok');
+    readSerialLoop();
+  }catch(e){if(e.name!=='NotFoundError')toast('Serial error: '+e.message,'err');}
+}
+
+async function readSerialLoop(){
+  const dec=new TextDecoderStream();
+  serialPort.readable.pipeTo(dec.writable);
+  serialReader=dec.readable.getReader();
+  let buf='';
+  try{
+    while(serialRunning){
+      const{value,done}=await serialReader.read();
+      if(done)break;
+      buf+=value;
+      const lines=buf.split('\n');buf=lines.pop();
+      for(const line of lines){const t=line.trim();if(!t)continue;try{processData(JSON.parse(t));setConnPill('conn','Connected');}catch(e){console.warn('[Serial]',t);}}
+    }
+  }catch(e){if(serialRunning){setConnPill('err','Read error');toast('Serial error: '+e.message,'err');}}
+}
+
+async function disconnectSerial(){
+  serialRunning=false;
+  try{serialReader?.cancel();}catch(e){}
+  try{await serialPort?.close();}catch(e){}
+  serialPort=null;serialReader=null;
+  setConnPill('','No device');setModePill('','Idle');
+  document.getElementById('stopBtn').style.display='none';
+  document.getElementById('connectBtn').style.display='';
+  document.getElementById('liveDot').style.display='none';
+  document.getElementById('serialDot').style.background='var(--t4)';
+  document.getElementById('serialTxt').textContent='No port selected';
+  toast('Disconnected','warn');
+}
+
+function processData(payload){
+  const now=new Date(),ts=now.getTime(),tsStr=now.toISOString().slice(0,19).replace('T',' '),label=now.toLocaleTimeString('en-GB');
+  let gotAny=false;
+  Object.entries(payload).forEach(([k,v])=>{
+    if(k==='timestamp')return;
+    const n=parseFloat(v);if(isNaN(n))return;
+    if(!sessionData[k])sessionData[k]={ts:[],vals:[],labels:[]};
+    sessionData[k].ts.push(ts);sessionData[k].vals.push(n);sessionData[k].labels.push(label);
+    gotAny=true;
+  });
+  if(!gotAny)return;
+  totalRecs++;
+  logRows.unshift({tsStr,vals:{...payload}});
+  if(logRows.length>200)logRows.pop();
+  const keys=Object.keys(sessionData);
+  document.getElementById('sRec').textContent=totalRecs;
+  document.getElementById('sSen').textContent=keys.length;
+  document.getElementById('sLast').textContent=label;
+  document.getElementById('emptyState').style.display='none';
+  scheduleRender();
+  fbPush(tsStr,payload);
+  if(drillKey&&!drillPanned)refreshDrill();
+}
+
+function scheduleRender(){if(renderScheduled)return;renderScheduled=true;requestAnimationFrame(()=>{renderScheduled=false;renderAll();});}
+
+function getSlice(key){
+  const d=sessionData[key];if(!d||!d.vals.length)return{ts:[],vals:[],labels:[]};
+  const n=currentView===0?d.vals.length:Math.min(currentView,d.vals.length);
+  return{ts:d.ts.slice(-n),vals:d.vals.slice(-n),labels:d.labels.slice(-n)};
+}
+
+function renderAll(){
+  const keys=Object.keys(sessionData);if(!keys.length)return;
+  if(document.getElementById('sumRow')){updateSummary(keys);updateCards(keys);updateLog();return;}
+  const ws=document.getElementById('ws');ws.innerHTML='';
+  const sumRow=document.createElement('div');sumRow.className='sum-row';sumRow.id='sumRow';
+  keys.forEach(k=>{
+    const d=sessionData[k],color=getColor(k),latest=d.vals[d.vals.length-1];
+    const div=document.createElement('div');div.className='scard';div.id='scard-'+k;
+    div.style.borderTop='3px solid '+color;div.onclick=()=>openDrill(k);div.title='Click to drill down';
+    div.innerHTML=`<div class="scard-lbl">${k.toUpperCase()}</div><div class="scard-val" id="scval-${k}" style="color:${color}">${latest.toFixed(2)}</div><div class="scard-sub" id="scmeta-${k}">--</div>`;
+    sumRow.appendChild(div);
+  });
+  ws.appendChild(sumRow);
+  const cgrid=document.createElement('div');cgrid.className='cgrid';cgrid.id='cgrid';
+  keys.forEach(k=>{
+    const color=getColor(k);const cc=document.createElement('div');cc.className='ccard';cc.id='cc-'+k;
+    cc.ondblclick=()=>openDrill(k);
+    cc.innerHTML=`<span class="drill-hint">dbl-click to drill down</span>
+      <div class="cc-hdr"><span class="cc-title">${k.replace(/_/g,' ')}</span><span class="badge ok" id="badge-${k}">OK</span></div>
+      <div class="cc-body"><span class="cc-num" id="ccn-${k}" style="color:${color}">--</span>
+      <div class="cc-chart"><canvas id="cvc-${k}" role="img" aria-label="${k} trend chart"></canvas></div>
+      <div class="cc-meta"><span>MIN <b id="cmin-${k}">--</b></span><span>AVG <b id="cavg-${k}">--</b></span><span>MAX <b id="cmax-${k}">--</b></span><span>PTS <b id="cpts-${k}">--</b></span></div></div>`;
+    cgrid.appendChild(cc);
+  });
+  ws.appendChild(cgrid);
+  const logcard=document.createElement('div');logcard.className='logcard';
+  logcard.innerHTML=`<div class="loghdr"><span class="logtitle">Live Data Log</span><span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--t4)">last 50 records</span></div><div class="logbody" id="logBody"></div>`;
+  ws.appendChild(logcard);
+  requestAnimationFrame(()=>{keys.forEach(k=>initChart(k));updateSummary(keys);updateCards(keys);updateLog();});
+}
+
+function updateSummary(keys){
+  keys.forEach(k=>{
+    const d=sessionData[k];if(!d||!d.vals.length)return;
+    const vals=d.vals,latest=vals[vals.length-1],prev=vals[vals.length-2];
+    const min=Math.min(...vals),max=Math.max(...vals),avg=vals.reduce((a,b)=>a+b,0)/vals.length;
+    const el=id=>document.getElementById(id);
+    if(el('scval-'+k))el('scval-'+k).textContent=latest.toFixed(2);
+    let trend='<span style="color:var(--t4)">─ stable</span>';
+    if(prev!==undefined){const d2=latest-prev;if(d2>0.001)trend=`<span class="trend-up">▲ +${d2.toFixed(3)}</span>`;else if(d2<-0.001)trend=`<span class="trend-dn">▼ ${d2.toFixed(3)}</span>`;}
+    if(el('scmeta-'+k))el('scmeta-'+k).innerHTML=`avg ${avg.toFixed(2)} · ${min.toFixed(2)}–${max.toFixed(2)}<br>${trend}`;
+  });
+}
+
+function updateCards(keys){
+  keys.forEach(k=>{
+    const d=sessionData[k];if(!d||!d.vals.length)return;
+    const{vals,labels}=getSlice(k),all=d.vals;
+    const latest=all[all.length-1],min=Math.min(...all),max=Math.max(...all),avg=all.reduce((a,b)=>a+b,0)/all.length;
+    const el=id=>document.getElementById(id);
+    if(el('ccn-'+k))el('ccn-'+k).textContent=latest.toFixed(3);
+    if(el('cmin-'+k))el('cmin-'+k).textContent=min.toFixed(2);
+    if(el('cavg-'+k))el('cavg-'+k).textContent=avg.toFixed(2);
+    if(el('cmax-'+k))el('cmax-'+k).textContent=max.toFixed(2);
+    if(el('cpts-'+k))el('cpts-'+k).textContent=all.length;
+    if(charts[k]){charts[k].data.labels=labels;charts[k].data.datasets[0].data=vals;charts[k].data.datasets[0].pointRadius=vals.length>60?0:2;charts[k].update('none');}
+  });
+}
+
+function initChart(key){
+  const el=document.getElementById('cvc-'+key);if(!el)return;
+  if(charts[key])charts[key].destroy();
+  const color=getColor(key),{vals,labels}=getSlice(key);
+  charts[key]=new Chart(el.getContext('2d'),{
+    type:'line',
+    data:{labels,datasets:[{data:vals,borderColor:color,backgroundColor:color+'15',borderWidth:1.5,tension:.38,pointRadius:vals.length>60?0:2,fill:true}]},
+    options:{animation:false,responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{mode:'index',intersect:false}},
+      scales:{x:{display:false},y:{display:true,grid:{color:'#dde4ef',lineWidth:.5},border:{display:false},ticks:{color:'#94a3b8',font:{family:'JetBrains Mono',size:9},maxTicksLimit:3,callback:v=>v.toFixed(1)}}}}
+  });
+}
+
+function updateLog(){
+  const body=document.getElementById('logBody');if(!body)return;
+  const keys=Object.keys(sessionData);
+  if(!logRows.length){body.innerHTML='<div class="log-empty">No entries yet.</div>';return;}
+  body.innerHTML=logRows.slice(0,50).map(row=>keys.map(k=>{const v=row.vals[k];if(v===undefined||v===null)return'';const n=parseFloat(v);if(isNaN(n))return'';return`<div class="logrow"><span class="log-ts">${row.tsStr}</span><span class="log-k" style="color:${getColor(k)}">${k}</span><span class="log-v">${n.toFixed(4)}</span></div>`;}).join('')).join('');
+}
+
+function setView(btn,n){document.querySelectorAll('.rbtn').forEach(b=>b.classList.remove('on'));btn.classList.add('on');currentView=n;updateCards(Object.keys(sessionData));}
+
+function openDrill(key){
+  drillKey=key;drillPanOff=0;drillPanned=false;drillZoom=50;
+  document.getElementById('dmDot').style.background=getColor(key);
+  document.getElementById('dmTitle').textContent=key.replace(/_/g,' ').toUpperCase();
+  document.getElementById('drillOv').classList.add('open');
+  document.querySelectorAll('.zbtn').forEach(b=>b.classList.remove('on'));
+  document.querySelector('.zbtn').classList.add('on');
+  refreshDrill();
+}
+
+function closeDrill(){document.getElementById('drillOv').classList.remove('open');drillKey=null;if(drillChart){drillChart.destroy();drillChart=null;}}
+
+function getDrillSlice(){
+  if(!drillKey)return{vals:[],labels:[]};
+  const d=sessionData[drillKey];if(!d||!d.vals.length)return{vals:[],labels:[]};
+  const total=d.vals.length,zoom=drillZoom===0?total:Math.min(drillZoom,total);
+  const maxOff=Math.max(0,total-zoom),off=Math.max(0,Math.min(drillPanOff,maxOff));
+  const start=total-zoom-off,end=total-off;
+  return{vals:d.vals.slice(start,end),labels:d.labels.slice(start,end)};
+}
+
+function refreshDrill(){
+  if(!drillKey)return;
+  const d=sessionData[drillKey];if(!d||!d.vals.length)return;
+  const color=getColor(drillKey),{vals,labels}=getDrillSlice(),all=d.vals;
+  const latest=all[all.length-1],min=Math.min(...all),max=Math.max(...all),avg=all.reduce((a,b)=>a+b,0)/all.length;
+  document.getElementById('dmLatest').textContent=latest.toFixed(4);
+  document.getElementById('dmMin').textContent=min.toFixed(4);
+  document.getElementById('dmAvg').textContent=avg.toFixed(4);
+  document.getElementById('dmMax').textContent=max.toFixed(4);
+  document.getElementById('dmSub').textContent=all.length+' pts total';
+  document.getElementById('dmRange').textContent=labels.length?labels[0]+' → '+labels[labels.length-1]:'';
+  const el=document.getElementById('drillCanvas');
+  if(drillChart){drillChart.destroy();drillChart=null;}
+  drillChart=new Chart(el.getContext('2d'),{
+    type:'line',
+    data:{labels,datasets:[{data:vals,borderColor:color,backgroundColor:color+'18',borderWidth:2,tension:.3,pointRadius:vals.length>100?0:3,pointHoverRadius:5,fill:true}]},
+    options:{animation:false,responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+      plugins:{legend:{display:false},tooltip:{backgroundColor:'white',titleColor:'#334155',bodyColor:'#64748b',borderColor:'#dde4ef',borderWidth:1,callbacks:{label:ctx=>'  '+ctx.parsed.y.toFixed(4)}}},
+      scales:{x:{display:true,grid:{color:'#f1f5f9',lineWidth:.5},border:{display:false},ticks:{color:'#94a3b8',font:{family:'JetBrains Mono',size:9},maxTicksLimit:8,maxRotation:0}},
+        y:{display:true,grid:{color:'#f1f5f9',lineWidth:.5},border:{display:false},ticks:{color:'#94a3b8',font:{family:'JetBrains Mono',size:9},maxTicksLimit:5,callback:v=>v.toFixed(2)}}}}
+  });
+  el.onwheel=e=>{
+    e.preventDefault();
+    const total=sessionData[drillKey]?.vals.length||500;
+    drillZoom=drillZoom===0?total:drillZoom;
+    drillZoom=Math.max(20,Math.min(total,drillZoom+(e.deltaY>0?20:-20)));
+    drillPanned=drillPanOff>0;refreshDrill();
+  };
+}
+
+function drillSetZoom(pts,btn){drillZoom=pts;drillPanOff=0;drillPanned=false;document.querySelectorAll('.zbtn').forEach(b=>b.classList.remove('on'));btn.classList.add('on');refreshDrill();}
+function drillPan(dir){const d=sessionData[drillKey];if(!d)return;const step=Math.max(10,Math.floor((drillZoom||d.vals.length)*.25));drillPanOff=Math.max(0,drillPanOff+dir*step);drillPanned=drillPanOff>0;refreshDrill();}
+function drillSnapLive(){drillPanOff=0;drillPanned=false;refreshDrill();}
+
+document.addEventListener('keydown',e=>{
+  if(!drillKey)return;
+  if(e.key==='Escape')closeDrill();
+  if(e.key==='ArrowLeft'){e.preventDefault();drillPan(1);}
+  if(e.key==='ArrowRight'){e.preventDefault();drillPan(-1);}
+  if(e.key==='+'||e.key==='='){drillZoom=Math.max(20,(drillZoom||500)-30);refreshDrill();}
+  if(e.key==='-'){drillZoom=Math.min(2000,(drillZoom||50)+30);refreshDrill();}
+});
+
+function fbPush(tsStr,payload){
+  if(!fbPushReady||!window._fbSet)return;
+  Object.assign(fbBuffer,payload);fbBuffer.timestamp=tsStr;
+  clearTimeout(fbFlushTimer);
+  fbFlushTimer=setTimeout(async()=>{
+    const snap={...fbBuffer};fbBuffer={};
+    try{await window._fbSet('latest',snap);await window._fbPush(snap);}
+    catch(e){console.warn('[Firebase] write failed:',e.message);document.getElementById('fbDot').style.background='var(--red)';document.getElementById('fbTxt').textContent='Firebase: write error';}
+  },500);
+}
+
+function exportCSV(){
+  const keys=Object.keys(sessionData);if(!keys.length){toast('No data to export','warn');return;}
+  const header=['timestamp',...keys].join(',');
+  const rows=logRows.slice().reverse().map(r=>[r.tsStr,...keys.map(k=>{const v=r.vals[k];return v!==undefined?parseFloat(v).toFixed(4):'';})].join(','));
+  const blob=new Blob([header+'\n'+rows.join('\n')],{type:'text/csv'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='reflexsense_'+new Date().toISOString().slice(0,19).replace(/:/g,'-')+'.csv';a.click();toast('CSV exported','ok');
+}
+
+function setConnPill(state,text){document.getElementById('connPill').className='spill'+(state?' '+state:'');document.getElementById('connTxt').textContent=text;}
+function setModePill(mode,text){document.getElementById('modePill').className='spill'+(mode==='live'?' live':'');document.getElementById('liveDot').style.display=mode==='live'?'':'none';document.getElementById('modeTxt').textContent=text;}
+function toast(msg,type='ok'){const el=document.getElementById('toast');el.textContent=msg;el.className='toast show '+type;clearTimeout(toastTmr);toastTmr=setTimeout(()=>el.className='toast',3500);}
+</script>
+</body>
+</html>
