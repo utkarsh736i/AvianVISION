@@ -7,6 +7,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Open+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script type="module">
+
+let drillLiveMode = false;
 import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import { getDatabase, ref, set, push, child } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
@@ -333,7 +335,11 @@ function processData(payload){
   document.getElementById('emptyState').style.display='none';
   scheduleRender();
   fbPush(tsStr,payload);
-  if(drillKey&&!drillPanned)refreshDrill();
+  if(drillKey && drillLiveMode){
+  drillPanOff = 0;
+  drillPanned = false;
+  refreshDrill();
+}
 }
 
 function scheduleRender(){if(renderScheduled)return;renderScheduled=true;requestAnimationFrame(()=>{renderScheduled=false;renderAll();});}
@@ -476,7 +482,13 @@ function refreshDrill(){
 }
 
 function drillSetZoom(pts,btn){drillZoom=pts;drillPanOff=0;drillPanned=false;document.querySelectorAll('.zbtn').forEach(b=>b.classList.remove('on'));btn.classList.add('on');refreshDrill();}
-function drillPan(dir){const d=sessionData[drillKey];if(!d)return;const step=Math.max(10,Math.floor((drillZoom||d.vals.length)*.25));drillPanOff=Math.max(0,drillPanOff+dir*step);drillPanned=drillPanOff>0;refreshDrill();}
+function drillPan(dir){const d=sessionData[drillKey];if(!d)return;drillLiveMode = false;
+
+const btn = document.querySelector('.snap-btn');
+btn.style.background = 'rgba(37,99,235,.05)';
+btn.style.borderColor = 'rgba(37,99,235,.4)';
+btn.style.color = 'var(--blue)';
+btn.textContent = '⬤ Snap to Live';const step=Math.max(10,Math.floor((drillZoom||d.vals.length)*.25));drillPanOff=Math.max(0,drillPanOff+dir*step);drillPanned=drillPanOff>0;refreshDrill();}
 function drillSnapLive(){
   drillLiveMode = !drillLiveMode;
 
